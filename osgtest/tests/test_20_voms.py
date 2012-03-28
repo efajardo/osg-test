@@ -1,6 +1,7 @@
 import os
 import osgtest.library.core as core
 import osgtest.library.files as files
+import osgtest.library.tomcat as tomcat
 import pwd
 import shutil
 import socket
@@ -71,10 +72,10 @@ class TestStartVOMS(unittest.TestCase):
         core.config['voms.vo'] = 'osgtestvo'
         core.config['voms.lsc-dir'] = '/etc/grid-security/vomsdir/osgtestvo'
         core.config['voms.lock-file'] = '/var/lock/subsys/voms.osgtestvo'
-        core.config['voms.vo-webapp'] = ('/usr/share/tomcat5/conf/Catalina/' +
-                                         'localhost/voms#osgtestvo.xml')
-        core.config['voms.webapp-log'] = ('/var/log/tomcat5/' +
-                                          'voms-admin-osgtestvo.log')
+        core.config['voms.vo-webapp'] = os.path.join(
+            tomcat.datadir(), "conf/Catalina/localhost/voms#osgtestvo.xml")
+        core.config['voms.webapp-log'] = os.path.join(
+            tomcat.logdir(), 'voms-admin-osgtestvo.log')
 
     def test_05_configure_voms_admin(self):
         if core.missing_rpm('voms-admin-server', 'voms-mysql-plugin'):

@@ -5,6 +5,9 @@ import subprocess
 import sys
 import tempfile
 import time
+import traceback
+
+import osgtest.library.files as files
 
 
 # ------------------------------------------------------------------------------
@@ -35,6 +38,7 @@ options = None
 _log = None
 _log_filename = None
 _last_log_had_output = True
+_el_release = None
 
 
 # ------------------------------------------------------------------------------
@@ -226,6 +230,12 @@ def __run_command(command, use_test_user, a_input, a_stdout, a_stderr,
         _log.write('\n')
     _log.write('osgtest: ')
     _log.write(time.strftime('%Y-%m-%d %H:%M:%S: '))
+    # HACK: print test name
+    stack = traceback.extract_stack()
+    for stackentry in reversed(stack):
+        filename, lineno, funcname, text = stackentry
+        if re.search(r'test_\d+.+\.py', filename):
+            _log.write("%s:%d:%s\n" % (filename, lineno, funcname))
     _log.write(' '.join(__format_command(command)))
 
     # Run and return command
@@ -256,3 +266,19 @@ def __run_command(command, use_test_user, a_input, a_stdout, a_stderr,
     _log.flush()
 
     return (p.returncode, stdout, stderr)
+
+
+def el_release():
+    global _el_release
+    if not _el_release:
+        try:
+            release_text = files.read("/etc/redhat-release", True)
+            match = re.search(r"release (\d)", release_text)
+            _el_release = int(match.group(1))
+        except Exception, e: 
+            _log.write("Couldn't determine redhat release: " + str(e) + "\n")
+            sys.exit(1)
+    return _el_release
+
+
+
