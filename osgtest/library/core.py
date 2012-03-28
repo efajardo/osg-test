@@ -7,8 +7,6 @@ import tempfile
 import time
 import traceback
 
-import osgtest.library.files as files
-
 
 # ------------------------------------------------------------------------------
 # Module attributes
@@ -272,7 +270,11 @@ def el_release():
     global _el_release
     if not _el_release:
         try:
-            release_text = files.read("/etc/redhat-release", True)
+            try:
+                release_file = open("/etc/redhat-release", 'r')
+                release_text = release_file.read()
+            finally:
+                release_file.close()
             match = re.search(r"release (\d)", release_text)
             _el_release = int(match.group(1))
         except Exception, e: 
