@@ -11,22 +11,22 @@ def majorver():
 def pkgname():
     return "tomcat" + str(majorver())
 
-def servicename():
-    return "tomcat" + str(majorver())
-
 def datadir():
     return os.path.join("/usr/share", pkgname())
 
 def logdir():
     return os.path.join("/var/log", pkgname())
 
-def sysconfdir()
+def sysconfdir():
     return os.path.join("/etc", pkgname())
 
-def pidfile()
+def conffile():
+    return os.path.join(sysconfdir(), pkgname() + ".conf")
+
+def pidfile():
     return os.path.join("/var/run", pkgname() + ".pid")
 
-def serverlibdir()
+def serverlibdir():
     if majorver() == 6:
         return os.path.join(datadir(), "lib")
     else:

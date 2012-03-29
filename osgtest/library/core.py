@@ -228,12 +228,6 @@ def __run_command(command, use_test_user, a_input, a_stdout, a_stderr,
         _log.write('\n')
     _log.write('osgtest: ')
     _log.write(time.strftime('%Y-%m-%d %H:%M:%S: '))
-    # HACK: print test name
-    stack = traceback.extract_stack()
-    for stackentry in reversed(stack):
-        filename, lineno, funcname, text = stackentry
-        if re.search(r'test_\d+.+\.py', filename):
-            _log.write("%s:%d:%s\n" % (filename, lineno, funcname))
     _log.write(' '.join(__format_command(command)))
 
     # Run and return command
@@ -281,6 +275,4 @@ def el_release():
             _log.write("Couldn't determine redhat release: " + str(e) + "\n")
             sys.exit(1)
     return _el_release
-
-
 
