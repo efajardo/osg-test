@@ -4,7 +4,7 @@ import re
 
 import osgtest.library.core as core
 
-def start(service_name, fail_pattern='FAILED', init_script=None, sentinel_file=None, skip_if_running=True):
+def start(service_name, fail_pattern='FAILED', init_script=None, sentinel_file=None):
     """Start a service via an init script.
 
     'service_name' is used as the base of the keys in the core.config and
@@ -18,8 +18,8 @@ def start(service_name, fail_pattern='FAILED', init_script=None, sentinel_file=N
     'sentinel_file' is the path to a pid file or lock file, or some other file
     that is expected to exist iff the service is running.
 
-    If 'skip_if_running' is True, the service is not started up if the sentinel
-    file exists, or if core.state[service_name.started-service] is True.
+    The service is not started up if the sentinel file exists, or if
+    core.state[service_name.started-service] is True.
 
     The following globals are set:
     core.config[service_name.init-script] is set to the value of init_script
@@ -34,11 +34,12 @@ def start(service_name, fail_pattern='FAILED', init_script=None, sentinel_file=N
         init_script = service_name
     core.config[service_name + '.init-script'] = init_script
 
-    if skip_if_running:
-        if ((sentinel_file and os.path.exists(sentinel_file)) or
-                (core.state.get(service_name + '.started-service'))):
-            core.skip('service ' + service_name + ' already running')
-            return
+    if sentinel_file and os.path.exists(sentinel_file):
+        core.skip('service ' + service_name + ' already running (sentinel file found)')
+        return
+    if core.state.get(service_name + '.started-service'):
+        core.skip('service ' + service_name + ' already running (flagged as started)')
+        return
     core.state[service_name + '.started-service'] = False
 
     command = ('service', init_script, 'start')
