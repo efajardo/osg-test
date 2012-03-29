@@ -1,10 +1,12 @@
 import glob
 import os
-import osgtest.library.core as core
-import osgtest.library.files as files
-import osgtest.library.tomcat as tomcat
 import shutil
 import unittest
+
+import osgtest.library.core as core
+import osgtest.library.files as files
+import osgtest.library.service as service
+import osgtest.library.tomcat as tomcat
 
 class TestStopTomcat(unittest.TestCase):
 
@@ -12,15 +14,7 @@ class TestStopTomcat(unittest.TestCase):
         if not core.rpm_is_installed(tomcat.pkgname()):
             core.skip('not installed')
             return
-        if not core.state['tomcat.started-server']:
-            core.skip('did not start server')
-            return
-
-        command = ('service', tomcat.servicename(), 'stop')
-        stdout, stderr, fail = core.check_system(command, 'Stop Tomcat')
-        self.assertEqual(stdout.find('FAILED'), -1, fail)
-        self.assert_(not os.path.exists(tomcat.pidfile()),
-                     'Tomcat server PID file still exists')
+        service.stop('tomcat')
 
     def test_02_remove_vo_webapp(self):
         if not core.rpm_is_installed('voms-admin-server'):
@@ -66,3 +60,10 @@ class TestStopTomcat(unittest.TestCase):
         files.remove('/var/lib/trustmanager-tomcat/server.xml')
 
         core.log_message('EMI trustmanager removed')
+    
+    def test_05_deconfig_tomcat(self):
+        if core.missing_rpm(tomcat.pkgname()):
+            return
+
+        files.restore(tomcat.conffile())
+

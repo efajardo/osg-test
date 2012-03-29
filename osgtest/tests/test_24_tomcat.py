@@ -1,10 +1,12 @@
 import os
-import osgtest.library.core as core
-import osgtest.library.files as files
-import osgtest.library.tomcat as tomcat
 import re
 import shutil
 import unittest
+
+import osgtest.library.core as core
+import osgtest.library.files as files
+import osgtest.library.service as service
+import osgtest.library.tomcat as tomcat
 
 class TestStartTomcat(unittest.TestCase):
 
@@ -33,19 +35,19 @@ class TestStartTomcat(unittest.TestCase):
             core.state['voms.webapp-log-stat'] = \
                 os.stat(core.config['voms.webapp-log'])
 
-    def test_04_start_tomcat(self):
-        core.state['tomcat.started-server'] = False
+    def test_04_config_tomcat_endorsed_jars(self):
+        if core.missing_rpm(tomcat.pkgname()):
+            return
 
+        old_contents = files.read(tomcat.conffile(), True)
+        line = '\nJAVA_ENDORSED_DIRS="${JAVA_ENDORSED_DIRS+$JAVA_ENDORSED_DIRS:}/usr/share/voms-admin/endorsed\n'
+        new_contents = old_contents + line
+        files.write(tomcat.conffile(), new_contents)
+
+    def test_05_start_tomcat(self):
         if not core.rpm_is_installed(tomcat.pkgname()):
             core.skip('not installed')
             return
-        if os.path.exists(tomcat.pidfile()):
-            core.skip('apparently running')
-            return
+        
+        service.start('tomcat', init_script=tomcat.pkgname(), sentinel_file=tomcat.pidfile())
 
-        command = ('service', tomcat.servicename(), 'start')
-        stdout, stderr, fail = core.check_system(command, 'Start Tomcat')
-        self.assertEqual(stdout.find('FAILED'), -1, fail)
-        self.assert_(os.path.exists(tomcat.pidfile()),
-                     'Tomcat server PID file is missing')
-        core.state['tomcat.started-server'] = True
