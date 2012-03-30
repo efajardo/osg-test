@@ -1,11 +1,12 @@
 import os
-import osgtest.library.core as core
-import osgtest.library.files as files
-import osgtest.library.tomcat as tomcat
 import pwd
 import shutil
 import socket
 import unittest
+
+import osgtest.library.core as core
+import osgtest.library.files as files
+import osgtest.library.tomcat as tomcat
 
 class TestStartVOMS(unittest.TestCase):
 
@@ -26,7 +27,7 @@ class TestStartVOMS(unittest.TestCase):
             core.state[target_key + '-backup'] = backup_path
 
         if not os.path.exists(target_dir):
-            os.mkdir(target_dir)
+            os.makedirs(target_dir)
             core.state[target_key + '-dir'] = target_dir
             os.chown(target_dir, user.pw_uid, user.pw_gid)
             os.chmod(target_dir, 0755)
