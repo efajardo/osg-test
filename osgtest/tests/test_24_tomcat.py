@@ -40,8 +40,9 @@ class TestStartTomcat(unittest.TestCase):
             return
 
         old_contents = files.read(tomcat.conffile(), True)
-        line = '\nJAVA_ENDORSED_DIRS="${JAVA_ENDORSED_DIRS+$JAVA_ENDORSED_DIRS:}/usr/share/voms-admin/endorsed"\n'
-        new_contents = old_contents + line
+        line = 'JAVA_ENDORSED_DIRS="${JAVA_ENDORSED_DIRS+$JAVA_ENDORSED_DIRS:}/usr/share/voms-admin/endorsed"\n'
+        if old_contents.find(line) == -1:
+            new_contents = old_contents + "\n" + line
         files.write(tomcat.conffile(), new_contents)
 
     def test_05_start_tomcat(self):
