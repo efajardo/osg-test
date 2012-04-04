@@ -21,7 +21,8 @@ class TestStartVOMS(unittest.TestCase):
         source_path = core.config[source_key]
         user = pwd.getpwnam(owner_name)
 
-        if os.path.exists(target_path):
+        # Using os.path.lexists because os.path.exists return False for broken symlinks
+        if os.path.lexists(target_path):
             backup_path = target_path + '.osgtest.backup'
             shutil.move(target_path, backup_path)
             core.state[target_key + '-backup'] = backup_path
