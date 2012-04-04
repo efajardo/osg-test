@@ -1,6 +1,7 @@
 import os
 import os.path
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -72,12 +73,15 @@ def log_message(message):
 def end_log():
     _log.close()
 
-def dump_log():
-    logfile = open(_log_filename, 'r')
-    print '\n'
-    for line in logfile:
-        print line.rstrip('\n')
-    logfile.close()
+def dump_log(outfile=None):
+    if outfile is None:
+        logfile = open(_log_filename, 'r')
+        print '\n'
+        for line in logfile:
+            print line.rstrip('\n')
+        logfile.close()
+    else:
+        shutil.copy(_log_filename, outfile)
 
 def remove_log():
     os.remove(_log_filename)
@@ -228,6 +232,14 @@ def __run_command(command, use_test_user, a_input, a_stdout, a_stderr,
         _log.write('\n')
     _log.write('osgtest: ')
     _log.write(time.strftime('%Y-%m-%d %H:%M:%S: '))
+    # HACK: print test name
+    # Get the current test function name, the .py file it's in, and the line number from the call stack
+    if options.printtest:
+        stack = traceback.extract_stack()
+        for stackentry in reversed(stack):
+            filename, lineno, funcname, text = stackentry
+            if re.search(r'(test_\d+|special).+\.py', filename):
+                _log.write("%s:%s:%d: " % (os.path.basename(filename), funcname, lineno))
     _log.write(' '.join(__format_command(command)))
 
     # Run and return command
