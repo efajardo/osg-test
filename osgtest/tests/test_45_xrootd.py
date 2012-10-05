@@ -16,18 +16,28 @@ class TestXrootd(unittest.TestCase):
             return
 
         hostname = socket.getfqdn()
-        temp_dir = tempfile.mkdtemp()
+        if core.config['xrootd.gsi'] == "ON":
+            temp_dir="/tmp/vdttest"
+            if not os.path.exists(temp_dir):
+                os.mkdir(temp_dir)
+        else:
+            temp_dir = tempfile.mkdtemp()
         os.chmod(temp_dir, 0777)
         xrootd_url = 'root://%s/%s/copied_file.txt' % (hostname, temp_dir)
         command = ('xrdcp', TestXrootd.__data_path , xrootd_url)
 
         status, stdout, stderr = core.system(command, True)
+
         fail = core.diagnose('xrdcp copy, local to URL',
                              status, stdout, stderr)
         file_copied = os.path.exists(os.path.join(temp_dir, 'copied_file.txt'))
         shutil.rmtree(temp_dir)
-        self.assertEqual(status, 0, fail)
-        self.assert_(file_copied, 'Copied file missing')
+        if core.el_release() != 6:
+            self.assertEqual(status, 0, fail)
+            self.assert_(file_copied, 'Copied file missing')
+        else:
+            self.assertEqual(status, 1, fail)
+            self.assert_(not file_copied, 'Copied file existed somehow')
 
     def test_02_xrdcp_server_to_local(self):
         if core.missing_rpm('xrootd-server', 'xrootd-client'):
@@ -46,22 +56,31 @@ class TestXrootd(unittest.TestCase):
         command = ('xrdcp', xrootd_url, local_path)
 
         status, stdout, stderr = core.system(command, True)
+        
         fail = core.diagnose('Xrootd xrdcp copy, URL to local',
                              status, stdout, stderr)
         file_copied = os.path.exists(local_path)
         shutil.rmtree(temp_source_dir)
         shutil.rmtree(temp_target_dir)
-        self.assertEqual(status, 0, fail)
-        self.assert_(file_copied, 'Copied file missing')
+        if core.el_release() != 6:
+            self.assertEqual(status, 0, fail)
+            self.assert_(file_copied, 'Copied file missing')
+        else:
+            self.assertEqual(status, 1, fail)
+            self.assert_(not file_copied, 'Copied file exists')
 
     def test_03_xrootd_fuse(self):
-        """ This tests xrootd-fuse using a mount in /mnt """
+        # This tests xrootd-fuse using a mount in /mnt 
         if core.missing_rpm('xrootd-server', 'xrootd-client','xrootd-fuse'):
             return
         if not os.path.exists("/mnt"):
-            log_message("/mnt did not exist, skipping xrootd fuse test")
+            core.log_message("/mnt did not exist, skipping xrootd fuse test")
+            return
         if not os.path.exists(TestXrootd.__fuse_path):
             os.mkdir(TestXrootd.__fuse_path)
+        if core.config['xrootd.gsi'] == "ON":
+            core.log_message("fuse incompatible with GSI, skipping xrootd fuse")
+            return
         hostname = socket.getfqdn()
         #command = ('xrootdfs',TestXrootd.__fuse_path,'-o','rdr=xroot://localhost:1094//tmp','-o','uid=xrootd')
         command = ('mount', '-t','fuse','-o','rdr=xroot://localhost:1094//tmp,uid=xrootd','xrootdfs',TestXrootd.__fuse_path)

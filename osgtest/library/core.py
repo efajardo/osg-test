@@ -181,7 +181,7 @@ def check_system(command, message, exit=0, user=None, stdin=None, shell=False):
     """
     status, stdout, stderr = system(command, user, stdin, shell=shell)
     fail = diagnose(message, status, stdout, stderr)
-    assert status == 0, fail
+    assert status == exit, fail
     return stdout, stderr, fail
 
 def rpm_is_installed(a_package):
@@ -332,6 +332,11 @@ def __run_command(command, use_test_user, a_input, a_stdout, a_stderr, log_outpu
 
 
 def el_release():
+    """Return the major version of the Enterprise Linux release the system is
+    running. SL/RHEL/CentOS 5.x will return 5; SL/RHEL/CentOS 6.x will return
+    6.
+
+    """
     global _el_release
     if not _el_release:
         try:

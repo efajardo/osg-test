@@ -1,10 +1,15 @@
 import os
 import osgtest.library.core as core
+import osgtest.library.files as files
 import unittest
 
 class TestStopXrootd(unittest.TestCase):
 
     def test_01_stop_xrootd(self):
+        if (core.config['xrootd.gsi'] == "ON") and (core.state['xrootd.backups-exist'] == True) :
+		    files.restore('/etc/xrootd/xrootd-clustered.cfg',"xrootd")
+		    files.restore('/etc/xrootd/auth_file',"xrootd")
+		    files.restore('/etc/grid-security/xrd/xrdmapfile',"xrootd")
         if not core.rpm_is_installed('xrootd-server'):
             core.skip('not installed')
             return
