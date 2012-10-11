@@ -61,6 +61,10 @@ class TestStartHadoop(unittest.TestCase):
         core.config['hdfs.data']='/tmp/hdfs/data'
         core.config['hdfs.checkpoint']='/tmp/hdfs/checkpoint'
 
+        if os.path.exists(os.path.join(core.config['hdfs.scratch'],"dfs")):
+            command = ('rm', '-Rf',core.config['hdfs.data'])
+            stdout, stderr, fail = core.check_system(command, 'Clean Hadoop data', shell=True,stdin="Y\r\n")
+
         for key in ('hdfs.directory','hdfs.scratch',
           'hdfs.data','hdfs.checkpoint'):
             if not os.path.exists(core.config[key]):
@@ -75,15 +79,13 @@ class TestStartHadoop(unittest.TestCase):
         self.write_core_config("/etc/hadoop/conf/core-site.xml")                
         
         command = ('hadoop', 'namenode','-format')
-        stdout, stderr, fail = core.check_system(command, 'Format Hadoop', shell=True)
+        stdout, stderr, fail = core.check_system(command, 'Format Hadoop', shell=True,stdin="Y\r\n")
         command = ('chown', '-R','hdfs:hdfs',core.config['hdfs.directory'])
         stdout, stderr, fail = core.check_system(command, 'Format Hadoop', shell=True)
             
         command = ('service', 'hadoop-hdfs-namenode', 'start')
         stdout, stderr, fail = core.check_system(command, 'Start Hadoop namenode')
         self.assert_(stdout.find('FAILED') == -1, fail)
-        #self.assert_(os.path.exists(core.config['xrootd.pid-file']),
-        #             'xrootd server PID file missing')
         command = ('service', 'hadoop-hdfs-datanode', 'start')
         stdout, stderr, fail = core.check_system(command, 'Start Hadoop namenode')
         self.assert_(stdout.find('FAILED') == -1, fail)

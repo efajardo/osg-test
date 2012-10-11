@@ -5,7 +5,7 @@ import unittest
 
 class TestStopHadoop(unittest.TestCase):
 
-    def test_01_stop_xrootd(self):
+    def test_01_stop_hadoop(self):
         if core.state['hadoop.started-server'] == False:
             core.skip('did not start server')
             return
