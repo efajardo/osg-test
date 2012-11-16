@@ -24,7 +24,11 @@ def parse_command_line():
 
     parser.set_defaults(cleanup=False)
     parser.add_option('-c', '--cleanup', action='store_true', dest='cleanup',
-                       help='Run clean-up steps after all tests are done')
+                       help='[DEPRECATED] Run clean-up steps after all tests are done')
+
+    parser.set_defaults(skip_cleanup=False)
+    parser.add_option('-n', '--no-cleanup', action='store_true', dest='skip_cleanup',
+                       help='Skip clean-up steps after all tests are done')
 
     parser.set_defaults(dumpout=False)
     parser.add_option('-d', '--dump-output', action='store_true',
@@ -32,7 +36,7 @@ def parse_command_line():
                       help='After test output, print all command output')
     
     parser.set_defaults(dumpfile=None)
-    parser.add_option('--dump-file', action='store', type='string', dest='dumpfile', metavar='DUMPFILE',
+    parser.add_option('--dump-file', '--df', action='store', type='string', dest='dumpfile', metavar='DUMPFILE',
                       help='Store all command output into a file')
 
     parser.set_defaults(packages=[])
@@ -52,9 +56,9 @@ def parse_command_line():
                       help='Extra repository (in addition to production) to use'
                       ' when installing packages')
 
-    parser.set_defaults(printtest=False)
-    parser.add_option('--print-test-name', action='store_true', dest='printtest',
-                       help='Print test name before command output')
+    parser.set_defaults(printtest=True)
+    parser.add_option('--no-print-test-name', action='store_false', dest='printtest',
+                       help='Do not print test name before command output')
 
     parser.set_defaults(runtests=True)
     parser.add_option('-T', '--skip', '--skip-tests', '--no-tests', '--notests',
@@ -74,7 +78,13 @@ def parse_command_line():
 
     (core.options, args) = parser.parse_args()
     if len(args) != 0:
-        parser.error('unknown argument(s): %s') % ' '.join(args)
+        parser.error('unknown argument(s): %s' % ' '.join(args))
+
+    if core.options.cleanup:
+        print 'WARNING: The "--cleanup" ("-c") option is deprecated as of osg-test 1.1.1.'
+        print 'The clean-up steps are always safe to run now, and hence are the default.'
+        print 'Use the "--no-cleanup" option to suppress clean-up steps.\n'
+        sys.stdout.flush()
 
 def discover_tests():
     test_dir = os.path.join(get_python_lib(), 'osgtest', 'tests')
@@ -82,14 +92,13 @@ def discover_tests():
                   if d.startswith('test_') and d.endswith('.py')]
     test_files.sort()
     args = [sys.argv[0]]
-    if core.options.runtests or core.options.adduser:
-        args.append('osgtest.tests.special_user')
+    args.append('osgtest.tests.special_user') # always safe
     if len(core.options.packages) > 0:
         args.append('osgtest.tests.special_install')
     if core.options.runtests:
         args += test_files
-    if core.options.cleanup:
-        args.append('osgtest.tests.special_cleanup')
+    if not core.options.skip_cleanup:
+        args.append('osgtest.tests.special_cleanup') # always safe
     return args
 
 def run_tests(a_argv):
