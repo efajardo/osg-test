@@ -108,7 +108,23 @@ def run_tests(a_argv):
         verb = 1
     test_suite = unittest.defaultTestLoader.loadTestsFromNames(a_argv)
     runner = unittest.TextTestRunner(verbosity=verb)
-    runner.run(test_suite)
+    result = runner.run(test_suite)
+    
+    # XXX FISHING TRIP-------------------------------------------------------
+    # Build and dump out a summary that another script can read back to report the test results.
+    summary = {'numerrors': len(result.errors), 'numfailures': len(result.failures), 'numtestsrun': result.testsRun, 'wassuccessful': result.wasSuccessful()}
+    
+    # TODO These should include failure messages.
+    summary['errorids'] = [x[0].id() for x in result.errors]
+    summary['failureids'] = [x[0].id() for x in result.failures]
+    filehandle = open('testsummary.txt', 'w')
+    # ^ TODO Don't hardcode this. Make it an option.
+    filehandle.write(repr(summary))
+    filehandle.close()
+    # XXX END FISHING---------------------------------------------------------
+    
+    
+    
 
 
 # ------------------------------------------------------------------------------
