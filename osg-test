@@ -60,7 +60,7 @@ def parse_command_line():
     parser.add_option('--no-print-test-name', action='store_false', dest='printtest',
                        help='Do not print test name before command output')
 
-    parser.set_defaults(summary=None)
+    parser.set_defaults(summary_file=None)
     parser.add_option('--summary-file', action='store', type='string', dest='summary_file', metavar='FILE',
                       help='Summarize test results in a parseable format in a file')
 
