@@ -3,14 +3,19 @@ import os, re, unittest, sys, cStringIO
 import osgtest.library.core as core
 import osgtest.library.files as files
 
-# setup system library path
-pathname = os.path.realpath('/usr/share/osg-configure/tests')
-sys.path.insert(0, pathname)
 
 class TestOSGConfigure(unittest.TestCase):
 
     required_rpms = ['osg-configure',
                      'osg-configure-tests']
+
+    pathname = os.path.realpath('/usr/share/osg-configure/tests')
+
+    def setUp(self):
+        "setup system library path"
+        cls = self.__class__
+        if cls.pathname not in sys.path:
+            sys.path.insert(0, cls.pathname)
 
     def test_01_version(self):
         if core.missing_rpm(*self.required_rpms):
