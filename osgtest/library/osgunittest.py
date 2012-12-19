@@ -51,6 +51,9 @@ class OSGTestCase(unittest.TestCase):
         Create an instance of the class that will use the named test
         method when executed. Raises a ValueError if the instance does
         not have a method with the specified name.
+        
+        Usually, the user does not have to call this directly, but it will
+        be called by unittest's test discovery functions instead.
         """
         unittest.TestCase.__init__(self, methodName)
         # There's some Py 2.4/2.6 compatibility issues here:
@@ -61,33 +64,33 @@ class OSGTestCase(unittest.TestCase):
             self.__testMethodName = self._testMethodName
         
 
-    def skip_ok(self, msg=None):
+    def skip_ok(self, message=None):
         "Skip (ok) unconditionally"
-        raise OkSkipException, msg
+        raise OkSkipException, message
     
-    def skip_ok_if(self, expr, msg=None):
+    def skip_ok_if(self, expr, message=None):
         "Skip (ok) if the expression is true"
         if expr:
-            raise OkSkipException, msg
+            raise OkSkipException, message
     
-    def skip_ok_unless(self, expr, msg=None):
+    def skip_ok_unless(self, expr, message=None):
         "Skip (ok) if the expression is false"
         if not expr:
-            raise OkSkipException, msg
+            raise OkSkipException, message
     
-    def skip_bad(self, msg=None):
+    def skip_bad(self, message=None):
         "Skip (bad) unconditionally"
-        raise BadSkipException, msg
+        raise BadSkipException, message
     
-    def skip_bad_if(self, expr, msg=None):
+    def skip_bad_if(self, expr, message=None):
         "Skip (bad) if the expression is true"
         if expr:
-            raise BadSkipException, msg
+            raise BadSkipException, message
     
-    def skip_bad_unless(self, expr, msg=None):
+    def skip_bad_unless(self, expr, message=None):
         "Skip (bad) if the expression is false"
         if not expr:
-            raise BadSkipException, msg
+            raise BadSkipException, message
     
     def defaultTestResult(self):
         return OSGTestResult()
@@ -228,6 +231,9 @@ class OSGTextTestResult(OSGTestResult):
     Used by OSGTextTestRunner.
     This is copied from unittest._TextTestResult instead of subclassing it
     since that's a private interface (and is not called the same thing in py2.6).
+    
+    The user should not have to instantiate this directly; an instance will be
+    created by OSGTextTestRunner.
     """
     
     separator1 = '=' * 70
@@ -296,7 +302,7 @@ class OSGTextTestResult(OSGTestResult):
             return
 
         self.stream.writeln(self.separator1)
-        self.stream.writeln("%s:", flavour)
+        self.stream.writeln("%s:" % flavour)
         self.stream.writeln(self.separator2)
         for test, skip in skips:
             self.stream.writeln("%s %s" % (self.getDescription(test), str(skip)))
@@ -358,16 +364,14 @@ class OSGTextTestRunner(unittest.TextTestRunner):
                 counts.append("okSkips=%d" % okSkipped)
             self.stream.writeln("FAILED (" + ", ".join(counts) + ")")
         else:
-            self.stream.write("OK (")
-            if result.wasPerfect():
-                self.stream.write("PERFECT")
-            else:
-                self.stream.write("okSkips=%d" % len(result.okSkips))
-            self.stream.writeln(")")
+            self.stream.write("OK")
+            if not result.wasPerfect():
+                self.stream.write("(okSkips=%d)" % len(result.okSkips))
         return result
 
 
 # For consistency & future expansion.
 class OSGTestSuite(unittest.TestSuite):
     pass
+    
 
