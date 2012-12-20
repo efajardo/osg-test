@@ -4,6 +4,7 @@ import shutil
 import osgtest.library.core as core
 import osgtest.library.files as files
 import unittest
+import re
 
 class TestStartXrootd(unittest.TestCase):
     def install_cert(self, target_key, source_key, owner_name, permissions):
@@ -46,6 +47,8 @@ class TestStartXrootd(unittest.TestCase):
             core.skip('not installed')
             return
                   
+        xrootd_server_version, _, _ = core.check_system(('rpm', '-q', 'xrootd-server', '--qf=%{VERSION}'), 'Getting xrootd-server version')
+        
         user = pwd.getpwnam("xrootd")
         if core.config['xrootd.gsi'] == "ON":
             if not core.rpm_is_installed('globus-proxy-utils'):
@@ -74,9 +77,15 @@ class TestStartXrootd(unittest.TestCase):
             core.state['xrootd.backups-exist'] = True
 
         command = ('service', 'xrootd', 'start')
+        status, stdout, _ = core.system(command)
+        
+        if core.el_release() == 6 and re.match(r"3\.2\.[0-5]", xrootd_server_version):
+            self.assertEqual(status, 1, 'Expected failure on el6 with this version of xrootd-server') 
+        else:
+            self.assertEqual(status, 0, 'Start Xrootd server exited %d' % status)
 
-        stdout, stderr, fail = core.check_system(command, 'Start Xrootd server')
-        self.assert_(stdout.find('FAILED') == -1, fail)
-        self.assert_(os.path.exists(core.config['xrootd.pid-file']),
-                     'xrootd server PID file missing')
-        core.state['xrootd.started-server'] = True
+            self.assert_(stdout.find('FAILED') == -1, 'Start Xrootd server failed')
+            self.assert_(os.path.exists(core.config['xrootd.pid-file']),
+                         'xrootd server PID file missing')
+            core.state['xrootd.started-server'] = True
+

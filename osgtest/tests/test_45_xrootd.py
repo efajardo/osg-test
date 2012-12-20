@@ -6,6 +6,7 @@ import shutil
 import tempfile
 import unittest
 import pwd
+import re
 
 
 class TestXrootd(unittest.TestCase):
@@ -13,8 +14,28 @@ class TestXrootd(unittest.TestCase):
     __data_path = '/usr/share/osg-test/test_gridftp_data.txt'
     __fuse_path = '/mnt/xrootd_fuse_test'
 
+    def assert_server_started(self):
+        """Checks that the xrootd server is started if it is supposed to be,
+        and not started if it isn't supposed to be due to an expected failure
+        on el6.
+        Returns True if the test should be continue, False if it should be
+        skipped. Raises AssertionError on an unexpected result.
+        """
+        xrootd_server_version, _, _ = core.check_system(('rpm', '-q', 'xrootd-server', '--qf=%{VERSION}'), 'Getting xrootd-server version')
+        
+        if core.el_release() == 6 and re.match(r"3\.2\.[0-5]", xrootd_server_version):
+            self.assertEqual(core.state['xrootd.started-server'], False, 'Expected failure on el6 with this version of xrootd-server')
+            return False
+        else:
+            self.assertEqual(core.state['xrootd.started-server'], True, 'Server not running')
+            return True
+
+
     def test_01_xrdcp_local_to_server(self):
         if core.missing_rpm('xrootd-server', 'xrootd-client'):
+            return
+        if not self.assert_server_started():
+            core.skip('Server not running')
             return
 
         hostname = socket.getfqdn()
@@ -36,11 +57,15 @@ class TestXrootd(unittest.TestCase):
                              status, stdout, stderr)
         file_copied = os.path.exists(os.path.join(temp_dir, 'copied_file.txt'))
         shutil.rmtree(temp_dir)
+        
         self.assertEqual(status, 0, fail)
         self.assert_(file_copied, 'Copied file missing')
 
     def test_02_xrdcp_server_to_local(self):
         if core.missing_rpm('xrootd-server', 'xrootd-client'):
+            return
+        if not self.assert_server_started():
+            core.skip('Server not running')
             return
 
         hostname = socket.getfqdn()
@@ -62,6 +87,7 @@ class TestXrootd(unittest.TestCase):
         file_copied = os.path.exists(local_path)
         shutil.rmtree(temp_source_dir)
         shutil.rmtree(temp_target_dir)
+        
         self.assertEqual(status, 0, fail)
         self.assert_(file_copied, 'Copied file missing')
 
@@ -70,13 +96,14 @@ class TestXrootd(unittest.TestCase):
         if core.missing_rpm('xrootd-server', 'xrootd-client','xrootd-fuse'):
             return
         if not os.path.exists("/mnt"):
-            core.log_message("/mnt did not exist, skipping xrootd fuse test")
+            core.skip("/mnt did not exist")
             return
+        if core.config['xrootd.gsi'] == "ON":
+            core.skip("fuse incompatible with GSI")
+            return
+            
         if not os.path.exists(TestXrootd.__fuse_path):
             os.mkdir(TestXrootd.__fuse_path)
-        if core.config['xrootd.gsi'] == "ON":
-            core.log_message("fuse incompatible with GSI, skipping xrootd fuse")
-            return
         hostname = socket.getfqdn()
         #command = ('xrootdfs',TestXrootd.__fuse_path,'-o','rdr=xroot://localhost:1094//tmp','-o','uid=xrootd')
         command = ('mount', '-t','fuse','-o','rdr=xroot://localhost:1094//tmp,uid=xrootd','xrootdfs',TestXrootd.__fuse_path)
