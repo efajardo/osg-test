@@ -12,6 +12,7 @@ standard Python unittest library have been made:
 # pylint: disable=R0201,C0103
 import sys
 import unittest
+import traceback
 import time
 
 
@@ -56,13 +57,10 @@ class OSGTestCase(unittest.TestCase):
         be called by unittest's test discovery functions instead.
         """
         unittest.TestCase.__init__(self, methodName)
-        # There's some Py 2.4/2.6 compatibility issues here:
-        # 2.6 uses _testMethodName, and 2.4 uses __testMethodName.
-        # The run() method is based on 2.4 unittest, so we need to make
-        # sure __testMethodName exists.
-        if hasattr(self, '_testMethodName'):
-            self.__testMethodName = self._testMethodName
-        
+        # in py2.4, testMethodName is a private variable, which means it has
+        # a mangled version. Make a copy so methods we override can use it.
+        if hasattr(self, '_TestCase__testMethodName'):
+            self._testMethodName = self._TestCase__testMethodName
 
     def skip_ok(self, message=None):
         "Skip (ok) unconditionally"
@@ -117,7 +115,7 @@ class OSGTestCase(unittest.TestCase):
         if result is None:
             result = self.defaultTestResult()
         result.startTest(self)
-        testMethod = getattr(self, self.__testMethodName)
+        testMethod = getattr(self, self._testMethodName)
         canSkip = hasattr(result, 'addOkSkip') and hasattr(result, 'addBadSkip')
         try:
             try:
@@ -198,11 +196,27 @@ class OSGTestResult(unittest.TestResult):
     
     def addOkSkip(self, test, err):
         """Called when an ok skip has occurred. 'err' is a tuple as returned by sys.exc_info()"""
-        self.okSkips.append((test, self._exc_info_to_string(err, test)))
+        self.okSkips.append((test, self.skip_info_to_string(err, test)))
     
     def addBadSkip(self, test, err):
         """Called when a bad skip has occurred. 'err' is a tuple as returned by sys.exc_info()"""
-        self.badSkips.append((test, self._exc_info_to_string(err, test)))
+        self.badSkips.append((test, self.skip_info_to_string(err, test)))
+    
+    def skip_info_to_string(self, err, test):
+        """Get the string description out of an Ok/BadSkipException.
+        Pass it up to the parent if the exception is not one of those.
+        """
+        exctype, value, tb = err
+        
+        if exctype is OkSkipException or exctype is BadSkipException:
+            return str(value)
+            # TODO Need some way to print out the line that caused the skip
+            # if there is no message.
+            # This requires using the traceback module and filtering out
+            # stack frames we don't care about.
+            #return traceback.format_tb(tb)[-1] + ' ' + ''.join(traceback.format_exception_only(exctype, value))
+        else:
+            return self._exc_info_to_string(err, test)
     
     def wasSuccessful(self):
         """Tells whether or not this result was a success, considering bad skips as well."""
