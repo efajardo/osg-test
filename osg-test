@@ -1,0 +1,144 @@
+#!/usr/bin/python
+
+from distutils.sysconfig import get_python_lib
+from optparse import OptionParser
+import os
+import sys
+import unittest
+
+from osgtest.library import core
+from osgtest.library import osgunittest
+
+
+# ------------------------------------------------------------------------------
+# Functions
+# ------------------------------------------------------------------------------
+
+def parse_command_line():
+    script_description='''Tests an OSG Software RPM installation.'''
+    parser = OptionParser(usage='usage: %prog [options]',
+                          version='%prog ##VERSION##',
+                          description=script_description)
+
+    parser.set_defaults(adduser=False)
+    parser.add_option('-a', '--add-user', action='store_true', dest='adduser',
+                      help='Add and configure the test user account (see -u below)')
+
+    parser.set_defaults(cleanup=False)
+    parser.add_option('-c', '--cleanup', action='store_true', dest='cleanup',
+                       help='[DEPRECATED] Run clean-up steps after all tests are done')
+
+    parser.set_defaults(skip_cleanup=False)
+    parser.add_option('-n', '--no-cleanup', action='store_true', dest='skip_cleanup',
+                       help='Skip clean-up steps after all tests are done')
+
+    parser.set_defaults(dumpout=False)
+    parser.add_option('-d', '--dump-output', action='store_true',
+                      dest='dumpout',
+                      help='After test output, print all command output')
+    
+    parser.set_defaults(dumpfile=None)
+    parser.add_option('--dump-file', '--df', action='store', type='string', dest='dumpfile', metavar='DUMPFILE',
+                      help='Store all command output into DUMPFILE')
+
+    parser.set_defaults(packages=[])
+    parser.add_option('-i', '--install', action='append', dest='packages',
+                      metavar='PACKAGE',
+                      help='Install PACKAGE with yum before running tests')
+
+    parser.set_defaults(updaterepo=None)
+    parser.add_option('-g','--update-repo', action='store', type='string', dest='updaterepo', metavar='REPO',
+                      help='REPO to use when updating packages '
+                      'specified with the -i flag.')
+
+    parser.set_defaults(password='vdttest')
+    parser.add_option('-p', '--password', action='store', type='string',
+                      dest='password',
+                      help='Password for the grid certificate of the test user '
+                      '(see -u below)')
+
+    parser.set_defaults(extrarepos=[])
+    parser.add_option('-r', '--extra-repo', action='append', type='string',
+                      dest='extrarepos', metavar='REPO',
+                      help='Extra REPO (in addition to production) to use'
+                      ' when installing packages')
+
+    parser.set_defaults(printtest=True)
+    parser.add_option('--no-print-test-name', action='store_false', dest='printtest',
+                       help='Do not print test name before command output')
+
+    parser.set_defaults(runtests=True)
+    parser.add_option('-T', '--skip', '--skip-tests', '--no-tests', '--notests',
+                      action='store_false', dest='runtests',
+                      help='Do not run the functional tests; ' +
+                      'can enable install and cleanup separately')
+
+    parser.set_defaults(username='vdttest')
+    parser.add_option('-u', '--test-user', action='store', type='string',
+                      dest='username', metavar='NAME',
+                      help='The NAME of an unprivileged user account that can '
+                      'be used to run (some) test commands (default: vdttest)')
+
+    parser.set_defaults(verbose=False)
+    parser.add_option('-v', '--verbose', action='store_true', dest='verbose',
+                      help='Increase quantity of output')
+
+    (core.options, args) = parser.parse_args()
+    if len(args) != 0:
+        parser.error('unknown argument(s): %s' % ' '.join(args))
+
+    if core.options.updaterepo and not core.options.packages:
+        parser.error('The -g option requires -i.')
+
+    if core.options.cleanup:
+        print 'WARNING: The "--cleanup" ("-c") option is deprecated as of osg-test 1.1.1.'
+        print 'The clean-up steps are always safe to run now, and hence are the default.'
+        print 'Use the "--no-cleanup" option to suppress clean-up steps.\n'
+        sys.stdout.flush()
+
+def discover_tests():
+    test_dir = os.path.join(get_python_lib(), 'osgtest', 'tests')
+    test_files = ['osgtest.tests.' + d[:-3] for d in os.listdir(test_dir)
+                  if d.startswith('test_') and d.endswith('.py')]
+    test_files.sort()
+    args = []
+    args.append('osgtest.tests.special_user') # always safe
+    if len(core.options.packages) > 0:
+        args.append('osgtest.tests.special_install')
+    if core.options.runtests:
+        args += test_files
+    if not core.options.skip_cleanup:
+        args.append('osgtest.tests.special_cleanup') # always safe
+    return args
+
+def run_tests(a_argv):
+    if core.options.verbose:
+        verb = 2
+    else:
+        verb = 1
+    test_suite = unittest.defaultTestLoader.loadTestsFromNames(a_argv)
+    runner = osgunittest.OSGTextTestRunner(verbosity=verb)
+    runner.run(test_suite)
+
+
+# ------------------------------------------------------------------------------
+# MAIN
+# ------------------------------------------------------------------------------
+
+if __name__ == '__main__':
+    if os.getuid() != 0:
+        print 'Must be run as root'
+        sys.exit(1)
+    parse_command_line()
+    core.start_log()
+    tests = discover_tests()
+    if len(tests) > 1:
+        run_tests(tests)
+    else:
+        print 'No tests to run.'
+    core.end_log()
+    if core.options.dumpout:
+        core.dump_log()
+    if core.options.dumpfile:
+        core.dump_log(core.options.dumpfile)
+    core.remove_log()
