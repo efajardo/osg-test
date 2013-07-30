@@ -24,13 +24,9 @@ def parse_command_line():
     parser.add_option('-a', '--add-user', action='store_true', dest='adduser',
                       help='Add and configure the test user account (see -u below)')
 
-    parser.set_defaults(cleanup=False)
-    parser.add_option('-c', '--cleanup', action='store_true', dest='cleanup',
-                       help='[DEPRECATED] Run clean-up steps after all tests are done')
-
-    parser.set_defaults(skip_cleanup=False)
-    parser.add_option('-n', '--no-cleanup', action='store_true', dest='skip_cleanup',
-                       help='Skip clean-up steps after all tests are done')
+    parser.set_defaults(config=None)
+    parser.add_option('-c', '--config', action='string', dest='config',
+                       help='Configuration file to use that specifies command-line options')
 
     parser.set_defaults(dumpout=False)
     parser.add_option('-d', '--dump-output', action='store_true',
@@ -50,6 +46,10 @@ def parse_command_line():
     parser.add_option('-g','--update-repo', action='store', type='string', dest='updaterepo', metavar='REPO',
                       help='REPO to use when updating packages '
                       'specified with the -i flag.')
+
+    parser.set_defaults(skip_cleanup=False)
+    parser.add_option('-n', '--no-cleanup', action='store_true', dest='skip_cleanup',
+                       help='Skip clean-up steps after all tests are done')
 
     parser.set_defaults(password='vdttest')
     parser.add_option('-p', '--password', action='store', type='string',
@@ -88,13 +88,7 @@ def parse_command_line():
         parser.error('unknown argument(s): %s' % ' '.join(args))
 
     if core.options.updaterepo and not core.options.packages:
-        parser.error('The -g option requires -i.')
-
-    if core.options.cleanup:
-        print 'WARNING: The "--cleanup" ("-c") option is deprecated as of osg-test 1.1.1.'
-        print 'The clean-up steps are always safe to run now, and hence are the default.'
-        print 'Use the "--no-cleanup" option to suppress clean-up steps.\n'
-        sys.stdout.flush()
+        parser.error('The -g (--update-repo) option requires -i (--install).')
 
 def discover_tests():
     test_dir = os.path.join(get_python_lib(), 'osgtest', 'tests')
