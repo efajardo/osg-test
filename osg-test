@@ -84,8 +84,6 @@ def parse_command_line():
                       help='Increase quantity of output')
 
     (core.options, args) = parser.parse_args()
-    if len(args) != 0:
-        parser.error('unknown argument(s): %s' % ' '.join(args))
 
     if core.options.updaterepo and not core.options.packages:
         parser.error('The -g (--update-repo) option requires -i (--install).')
