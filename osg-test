@@ -6,6 +6,7 @@ import ConfigParser
 import os
 import sys
 import unittest
+import re
 
 from osgtest.library import core
 from osgtest.library import osgunittest
@@ -34,22 +35,31 @@ def parse_command_line():
     # First pass through args to get config file
     config_option = read_args()
     (opts, args) = config_option.parse_args()
+        
     if len(args) != 0:
         config_option.error('unknown argument(s): %s' % ' '.join(args))
     
     # Read the config file
     if opts.config:
         config = ConfigParser.RawConfigParser()
-        config.read(opts.config)
+        try:
+            config.read(opts.config)
+        except ConfigParser.ParsingError, e:
+            sys.stderr.write("Error while parsing: %s\n%s\n" % (opts.config, e))
+            sys.stderr.write("Lines with options should not start with a space\n")
+            sys.exit(1)
+            
         # Get intersection of config and defaults
         for key,value in config.items('Config'):
             if key in defaults: # Only accept keys that are command line options
                 if key == 'packages':
-                    defaults[key].append(value)
-                if key == 'extrarepos':
-                    defaults[key].append(value)
+                    defaults[key] = re.split(',\s*', value)
+                elif key == 'extrarepos':
+                    defaults[key] = re.split(',\s*', value)
                 elif defaults[key] is False: # Grab values as booleans if we expect them to be
                     defaults[key] = config.getboolean('Config', key)
+                else:
+                    defaults[key] = value
         
     # Read the rest of the command line options
     parser = read_args()
