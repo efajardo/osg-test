@@ -2,6 +2,7 @@
 
 from distutils.sysconfig import get_python_lib
 from optparse import OptionParser
+import ConfigParser
 import os
 import sys
 import unittest
@@ -15,78 +16,106 @@ from osgtest.library import osgunittest
 # ------------------------------------------------------------------------------
 
 def parse_command_line():
+    defaults = {"adduser" : False,
+                "config" : None,
+                "dumpout" : False,
+                "dumpfile" : None,
+                "packages" : [],
+                "updaterepo" : None,
+                "skip_cleanup" : False,
+                "password" : 'vdttest',
+                "extrarepos" : [],
+                "printtest" : True,
+                "runtests" : True,
+                "username" : 'vdttest',
+                "verbose" : False
+                }
+
+    # First pass through args to get config file
+    config_option = read_args()
+    (opts, args) = config_option.parse_args()
+    if len(args) != 0:
+        config_option.error('unknown argument(s): %s' % ' '.join(args))
+    
+    # Read the config file
+    if opts.config:
+        config = ConfigParser.RawConfigParser()
+        config.read(opts.config)
+        # Get intersection of config and defaults
+        for key,value in config.items('Config'):
+            if key in defaults: # Only accept keys that are command line options
+                if key == 'packages':
+                    defaults[key].append(value)
+                if key == 'extrarepos':
+                    defaults[key].append(value)
+                elif defaults[key] is False: # Grab values as booleans if we expect them to be
+                    defaults[key] = config.getboolean('Config', key)
+        
+    # Read the rest of the command line options
+    parser = read_args()
+    parser.set_defaults(**defaults)
+    (core.options, args) = parser.parse_args()
+    
+    if core.options.updaterepo and not core.options.packages:
+        parser.error('The -g (--update-repo) option requires -i (--install).')
+
+def read_args():
     script_description='''Tests an OSG Software RPM installation.'''
-    parser = OptionParser(usage='usage: %prog [options]',
+    p = OptionParser(usage='usage: %prog [options]',
                           version='%prog ##VERSION##',
                           description=script_description)
 
-    parser.set_defaults(adduser=False)
-    parser.add_option('-a', '--add-user', action='store_true', dest='adduser',
+    p.add_option('-a', '--add-user', action='store_true', dest='adduser',
                       help='Add and configure the test user account (see -u below)')
 
-    parser.set_defaults(config=None)
-    parser.add_option('-c', '--config', action='string', dest='config',
+    p.add_option('-c', '--config', action='store', dest='config',
                        help='Configuration file to use that specifies command-line options')
 
-    parser.set_defaults(dumpout=False)
-    parser.add_option('-d', '--dump-output', action='store_true',
+    p.add_option('-d', '--dump-output', action='store_true',
                       dest='dumpout',
                       help='After test output, print all command output')
     
-    parser.set_defaults(dumpfile=None)
-    parser.add_option('--dump-file', '--df', action='store', type='string', dest='dumpfile', metavar='DUMPFILE',
+    p.add_option('--dump-file', '--df', action='store', type='string', dest='dumpfile', metavar='DUMPFILE',
                       help='Store all command output into DUMPFILE')
 
-    parser.set_defaults(packages=[])
-    parser.add_option('-i', '--install', action='append', dest='packages',
+    p.add_option('-i', '--install', action='append', dest='packages',
                       metavar='PACKAGE',
                       help='Install PACKAGE with yum before running tests')
 
-    parser.set_defaults(updaterepo=None)
-    parser.add_option('-g','--update-repo', action='store', type='string', dest='updaterepo', metavar='REPO',
+    p.add_option('-g','--update-repo', action='store', type='string', dest='updaterepo', metavar='REPO',
                       help='REPO to use when updating packages '
                       'specified with the -i flag.')
 
-    parser.set_defaults(skip_cleanup=False)
-    parser.add_option('-n', '--no-cleanup', action='store_true', dest='skip_cleanup',
+    p.add_option('-n', '--no-cleanup', action='store_true', dest='skip_cleanup',
                        help='Skip clean-up steps after all tests are done')
 
-    parser.set_defaults(password='vdttest')
-    parser.add_option('-p', '--password', action='store', type='string',
+    p.add_option('-p', '--password', action='store', type='string',
                       dest='password',
                       help='Password for the grid certificate of the test user '
                       '(see -u below)')
 
-    parser.set_defaults(extrarepos=[])
-    parser.add_option('-r', '--extra-repo', action='append', type='string',
+    p.add_option('-r', '--extra-repo', action='append', type='string',
                       dest='extrarepos', metavar='REPO',
                       help='Extra REPO (in addition to production) to use'
                       ' when installing packages')
 
-    parser.set_defaults(printtest=True)
-    parser.add_option('--no-print-test-name', action='store_false', dest='printtest',
+    p.add_option('--no-print-test-name', action='store_false', dest='printtest',
                        help='Do not print test name before command output')
 
-    parser.set_defaults(runtests=True)
-    parser.add_option('-T', '--skip', '--skip-tests', '--no-tests', '--notests',
+    p.add_option('-T', '--skip', '--skip-tests', '--no-tests', '--notests',
                       action='store_false', dest='runtests',
                       help='Do not run the functional tests; ' +
                       'can enable install and cleanup separately')
 
-    parser.set_defaults(username='vdttest')
-    parser.add_option('-u', '--test-user', action='store', type='string',
+    p.add_option('-u', '--test-user', action='store', type='string',
                       dest='username', metavar='NAME',
                       help='The NAME of an unprivileged user account that can '
                       'be used to run (some) test commands (default: vdttest)')
 
-    parser.set_defaults(verbose=False)
-    parser.add_option('-v', '--verbose', action='store_true', dest='verbose',
+    p.add_option('-v', '--verbose', action='store_true', dest='verbose',
                       help='Increase quantity of output')
 
-    (core.options, args) = parser.parse_args()
-
-    if core.options.updaterepo and not core.options.packages:
-        parser.error('The -g (--update-repo) option requires -i (--install).')
+    return p
 
 def discover_tests():
     test_dir = os.path.join(get_python_lib(), 'osgtest', 'tests')

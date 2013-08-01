@@ -59,7 +59,6 @@ def start_log():
     _log.write('Start time: ' + time.strftime('%Y-%m-%d %H:%M:%S') + '\n\n')
     _log.write('Options:\n')
     _log.write('  - Add user: %s\n' % str(options.adduser))
-    _log.write('  - Cleanup: %s\n' % str(options.cleanup))
     _log.write('  - Install: %s\n' % ', '.join(options.packages))
     _log.write('  - Extra repos: %s\n' % ', '.join(options.extrarepos))
     _log.write('  - Run tests: %s\n' % str(options.runtests))
