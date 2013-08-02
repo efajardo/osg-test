@@ -156,10 +156,10 @@ def run_tests(a_argv):
 # ------------------------------------------------------------------------------
 
 if __name__ == '__main__':
+    parse_command_line()
     if os.getuid() != 0:
         print 'Must be run as root'
         sys.exit(1)
-    parse_command_line()
     core.start_log()
     tests = discover_tests()
     if len(tests) > 1:
