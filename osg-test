@@ -27,7 +27,7 @@ def parse_command_line():
                 "password" : 'vdttest',
                 "extrarepos" : [],
                 "printtest" : True,
-                "runtests" : True,
+                "skiptests" : False,
                 "username" : 'vdttest',
                 "verbose" : False
                 }
@@ -112,7 +112,7 @@ def read_args():
                        help='Do not print test name before command output')
 
     p.add_option('-T', '--skip', '--skip-tests', '--no-tests', '--notests',
-                      action='store_false', dest='runtests',
+                      action='store_true', dest='skiptests',
                       help='Do not run the functional tests; ' +
                       'can enable install and cleanup separately')
 
@@ -135,7 +135,7 @@ def discover_tests():
     args.append('osgtest.tests.special_user') # always safe
     if len(core.options.packages) > 0:
         args.append('osgtest.tests.special_install')
-    if core.options.runtests:
+    if not core.options.skiptests:
         args += test_files
     if not core.options.skip_cleanup:
         args.append('osgtest.tests.special_cleanup') # always safe
