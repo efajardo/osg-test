@@ -4,7 +4,6 @@ import unittest
 
 import osgtest.library.core as core
 import osgtest.library.files as files
-import osgtest.library.tomcat as tomcat
 import osgtest.library.osgunittest as osgunittest
 
 class TestGUMS(osgunittest.OSGTestCase):
@@ -17,15 +16,16 @@ class TestGUMS(osgunittest.OSGTestCase):
         user_dn, _ = core.certificate_info(cert_path)
         command = ('gums-service', 'manualGroupAdd', 'gums-test', user_dn)
         stdout = core.check_system(command, 'Add VDT DN to manual group')[0]
-        
+        core.state['gums.added_user'] = True
+
     def test_02_map_user(self):
         core.skip_ok_unless_installed('gums-service')
-
+        self.skip_bad_if(core.state['gums.added_user'] == False, 'User not added to manualUserGroup')
+        
         host_dn, _ = core.certificate_info(core.config['certs.hostcert'])
         pwd_entry = pwd.getpwnam(core.options.username)
         cert_path = os.path.join(pwd_entry.pw_dir, '.globus', 'usercert.pem')
         user_dn, _ = core.certificate_info(cert_path)
-        command = ('gums-host', 'mapUser', '-d', user_dn)
+        command = ('gums-host', 'mapUser', user_dn) # using gums-host since it defaults to the host cert
         stdout = core.check_system(command, 'Map GUMS user')[0]
-        self.assert_('null' not in stdout,
-                     'User mapping returned null')
+        self.assert_('GumsTestUserMappingSuccessful' in stdout)
