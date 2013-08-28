@@ -88,7 +88,7 @@ class TestStartGUMS(osgunittest.OSGTestCase):
         core.skip_ok_unless_installed('gums-service')
         command = ('gums-setup-mysql-database', '--noprompt', '--user', 'gums', '--host', 'localhost:3306',
                    '--password', core.config['gums.password'])
-        stdout, _, _ = core.check_system(command, 'Set up GUMS MySQL database')[0]
+        stdout = core.check_system(command, 'Set up GUMS MySQL database')[0]
         self.assert_('ERROR' not in stdout,
                      'gums-setup-mysql-database failure message')
 
@@ -100,6 +100,10 @@ class TestStartGUMS(osgunittest.OSGTestCase):
         mysql_template = files.read(mysql_template_path, as_single_string=True).strip()
         core.log_message(mysql_template)
 
+        pwd_entry = pwd.getpwnam(core.options.username)
+        cert_path = os.path.join(pwd_entry.pw_dir, '.globus', 'usercert.pem')
+        user_dn, _ = core.certificate_info(cert_path)
+
         mysql_command = re.sub(r'@ADMINDN@', host_dn, mysql_template)
         core.log_message(mysql_command)
 
@@ -109,12 +113,6 @@ class TestStartGUMS(osgunittest.OSGTestCase):
     def test_06_write_gums_config(self):
         core.skip_ok_unless_installed('gums-service')
 
-        # gums_config_path = '/etc/gums/gums.config'
-        # gums_old = '/root/gums.config'
-
-        # # Backup default file
-        # shutil.copy(gums_old, gums_config_path)
-        
         # Debugging -- can be deleted later
         command = ('cat', '/etc/gums/gums.config')
         core.check_system(command, 'Dump gums.config')
