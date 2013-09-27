@@ -9,27 +9,6 @@ import unittest
 import re
 
 class TestStartXrootd(osgunittest.OSGTestCase):
-    def install_cert(self, target_key, source_key, owner_name, permissions):
-        target_path = core.config[target_key]
-        target_dir = os.path.dirname(target_path)
-        source_path = core.config[source_key]
-        user = pwd.getpwnam(owner_name)
-
-        if os.path.exists(target_path):
-            backup_path = target_path + '.osgtest.backup'
-            shutil.move(target_path, backup_path)
-            core.state[target_key + '-backup'] = backup_path
-
-        if not os.path.exists(target_dir):
-            os.mkdir(target_dir)
-            core.state[target_key + '-dir'] = target_dir
-            os.chown(target_dir, user.pw_uid, user.pw_gid)
-            os.chmod(target_dir, 0755)
-
-        shutil.copy(source_path, target_path)
-        core.state[target_key] = target_path
-        os.chown(target_path, user.pw_uid, user.pw_gid)
-        os.chmod(target_path, permissions)
 
     def test_01_start_xrootd(self):
         core.config['xrootd.pid-file']='/var/run/xrootd/xrootd-default.pid'
@@ -52,9 +31,9 @@ class TestStartXrootd(osgunittest.OSGTestCase):
         user = pwd.getpwnam("xrootd")
         if core.config['xrootd.gsi'] == "ON":
             core.skip_ok_unless_installed('globus-proxy-utils')
-            self.install_cert('certs.xrootdcert', 'certs.hostcert', 
+            certs.install_cert('certs.xrootdcert', 'certs.hostcert', 
                 'xrootd', 0644)
-            self.install_cert('certs.xrootdkey', 'certs.hostkey', 
+            certs.install_cert('certs.xrootdkey', 'certs.hostkey', 
                 'xrootd', 0400)
 
             cfgfile='/etc/xrootd/xrootd-clustered.cfg'

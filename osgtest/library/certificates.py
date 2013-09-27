@@ -104,3 +104,33 @@ def certificate_info(path):
     if matches is None:
         raise OSError(status, stdout)
     return (matches.group(1), matches.group(2))
+
+def install_cert(self, target_key, source_key, owner_name, permissions):
+    """
+    Carefully install a certificate with the given key from the given
+    source path, then set ownership and permissions as given.  Record
+    each directory and file created by this process into the config
+    dictionary; do so immediately after creation, so that the
+    remove_cert() function knows exactly what to remove/restore.
+    """
+    target_path = core.config[target_key]
+    target_dir = os.path.dirname(target_path)
+    source_path = core.config[source_key]
+    user = pwd.getpwnam(owner_name)
+
+    # Using os.path.lexists because os.path.exists return False for broken symlinks
+    if os.path.lexists(target_path):
+        backup_path = target_path + '.osgtest.backup'
+        shutil.move(target_path, backup_path)
+        core.state[target_key + '-backup'] = backup_path
+
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+        core.state[target_key + '-dir'] = target_dir
+        os.chown(target_dir, user.pw_uid, user.pw_gid)
+        os.chmod(target_dir, 0755)
+
+    shutil.copy(source_path, target_path)
+    core.state[target_key] = target_path
+    os.chown(target_path, user.pw_uid, user.pw_gid)
+    os.chmod(target_path, permissions)
