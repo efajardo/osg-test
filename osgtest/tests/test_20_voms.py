@@ -9,6 +9,7 @@ import osgtest.library.core as core
 import osgtest.library.files as files
 import osgtest.library.tomcat as tomcat
 import osgtest.library.osgunittest as osgunittest
+import osgtest.library.certificates as certs
 
 class TestStartVOMS(osgunittest.OSGTestCase):
 
@@ -129,7 +130,7 @@ class TestStartVOMS(osgunittest.OSGTestCase):
     def test_06_add_local_admin(self):
         core.skip_ok_unless_installed('voms-admin-server', 'voms-mysql-plugin')
         host_dn, host_issuer = \
-            core.certificate_info(core.config['certs.hostcert'])
+            certs.certificate_info(core.config['certs.hostcert'])
         command = ('voms-db-deploy.py', 'add-admin',
                    '--vo', core.config['voms.vo'],
                    '--dn', host_dn, '--ca', host_issuer)
@@ -159,7 +160,7 @@ class TestStartVOMS(osgunittest.OSGTestCase):
 
         hostname = socket.getfqdn()
         vomses_path = '/etc/vomses'
-        host_dn, host_issuer = core.certificate_info(core.config['certs.hostcert'])
+        host_dn, host_issuer = certs.certificate_info(core.config['certs.hostcert'])
         contents = ('"%s" "%s" "%d" "%s" "%s"\n' %
                     (core.config['voms.vo'], hostname, 15151, host_dn, core.config['voms.vo']))
         files.write(vomses_path, contents, owner='voms')

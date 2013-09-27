@@ -4,6 +4,7 @@ import shutil
 import osgtest.library.core as core
 import osgtest.library.files as files
 import osgtest.library.osgunittest as osgunittest
+import osgtest.library.certificates as certs
 import unittest
 import re
 
@@ -67,7 +68,7 @@ class TestStartXrootd(osgunittest.OSGTestCase):
             files.write(authfile,'u * /tmp a\nu = /tmp/@=/ a\nu xrootd /tmp a\n',owner="xrootd")
             os.chown(authfile, user.pw_uid, user.pw_gid)
             
-            user_dn = core.certificate_info(core.config['certs.usercert'])[1]
+            user_dn = certs.certificate_info(core.config['certs.usercert'])[1]
             files.write("/etc/grid-security/xrd/xrdmapfile","\"%s\" vdttest" % user_dn,owner="xrootd")
             os.chown("/etc/grid-security/xrd/xrdmapfile",
                 user.pw_uid, user.pw_gid)

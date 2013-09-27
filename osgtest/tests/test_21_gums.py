@@ -9,6 +9,7 @@ import unittest
 import osgtest.library.core as core
 import osgtest.library.files as files
 import osgtest.library.osgunittest as osgunittest
+import osgtest.library.certificates as certs
 
 class TestStartGUMS(osgunittest.OSGTestCase):
 
@@ -93,7 +94,7 @@ class TestStartGUMS(osgunittest.OSGTestCase):
 
     def test_05_add_mysql_admin(self):
         core.skip_ok_unless_installed('gums-service')
-        host_dn, host_issuer = core.certificate_info(core.config['certs.hostcert'])
+        host_dn, host_issuer = certs.certificate_info(core.config['certs.hostcert'])
         mysql_template_path = '/usr/lib/gums/sql/addAdmin.mysql'
         self.assert_(os.path.exists(mysql_template_path), 'GUMS MySQL template exists')
         mysql_template = files.read(mysql_template_path, as_single_string=True).strip()
