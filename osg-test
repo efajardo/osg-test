@@ -150,6 +150,7 @@ def discover_tests():
                       if d.startswith('test_') and d.endswith('.py')]
     test_files.sort()
     args = []
+    args.append('osgtest.tests.special_certs')
     args.append('osgtest.tests.special_user') # always safe
     if not core.options.tarballs:
         if len(core.options.packages) > 0:
