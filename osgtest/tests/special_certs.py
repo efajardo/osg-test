@@ -11,7 +11,7 @@ class TestUser(unittest.TestCase):
         certs.configure_openssl()
 
         if not os.path.exists(certs_dir):
-            core.state['certs_dir.created'] = True
+            core.state['certs.dir_created'] = True
             os.mkdir(certs_dir, 0755)
         
         certs.create_ca(certs_dir)
