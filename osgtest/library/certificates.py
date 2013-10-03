@@ -8,9 +8,6 @@ import osgtest.library.files as files
 
 openssl_config = '/etc/pki/tls/openssl.cnf'
 cert_ext_config = '/usr/share/osg-test/openssl-cert-extensions.conf' 
-ca_file = "OSG-Test-CA.pem"
-ca_key = "OSG-Test-CA.key"
-crl_file = "OSG-Test-CA.r0"
 host_request = "host_req"
 dn = '/DC=org/DC=Open Science Grid/O=OSG Test/CN=OSG Test CA'
 days = '1'
@@ -44,8 +41,8 @@ def configure_openssl():
 
 def create_ca(path):
     """Create a CA similar to DigiCert's """
-    core.config['certs.test-ca'] = path + "/" + ca_file
-    core.config['certs.test-ca-key'] = path + "/" + ca_key
+    core.config['certs.test-ca'] = path + "/OSG-Test-CA.pem"
+    core.config['certs.test-ca-key'] = path + "/OSG-Test-CA.key"
 
     command = ("openssl", "genrsa", "-out", core.config['certs.test-ca-key'], "2048")
     core.check_system(command, 'generate CA private key')
@@ -54,29 +51,30 @@ def create_ca(path):
                core.config['certs.test-ca-key'], "-subj", dn, "-config", openssl_config, "-days", days)
     core.check_system(command, 'generate CA')
 
-def create_host_cert():
+def create_host_cert(path):
     """Create a cert similar to DigiCert's"""
     host_pk_der = "hostkey.der"
-    host_pk = "hostkey.pem"
-    host_cert = "hostcert.pem"
+    core.config['certs.hostkey'] = path + "/hostkey.pem"
+    core.config['certs.hostcert'] = path + "/hostcert.pem"
 
     command = ("openssl", "req", "-new", "-nodes", "-out", host_request, "-keyout", host_pk_der,"-subj", dn)
     core.check_system(command, 'generate host cert request')
     # Have to run the private key through RSA to get proper format (-keyform doesn't work in openssl > 0.9.8)
-    command = ("openssl", "rsa", "-in", host_pk_der, "-outform", "PEM", "-out", host_pk) 
+    command = ("openssl", "rsa", "-in", host_pk_der, "-outform", "PEM", "-out", core.config['certs.hostkey']) 
     core.check_system(command, "generate host private key") 
     files.remove(host_pk_der)
-    os.chmod(host_pk, 0400)
+    os.chmod(core.config['certs.hostkey'], 0400)
 
-    command = ("openssl", "ca", "-config", openssl_config, "-cert", ca_file, "-keyfile", ca_key, "-days", days,
-               "-policy", "policy_anything", "-preserveDN", "-extfile", cert_ext_config, "-in", host_request, "-notext",
-               "-out", host_cert, "-outdir", ".", "-batch")
+    command = ("openssl", "ca", "-config", openssl_config, "-cert", core.config['certs.test-ca'], "-keyfile",
+               core.config['certs.test-ca-key'], "-days", days, "-policy", "policy_anything", "-preserveDN", "-extfile",
+               cert_ext_config, "-in", host_request, "-notext","-out", core.config['certs.hostcert'], "-outdir", ".",
+               "-batch")
     core.check_system(command, "generate host cert")
 
  
 def create_crl():
     """Create CRL to accompany our CA."""
-    core.config['certs.test-crl'] = os.path.dirname(core.config['certs.test-ca']) + "/" + crl_file
+    core.config['certs.test-crl'] = os.path.dirname(core.config['certs.test-ca']) + "/OSG-Test-CA.r0"
         
     command = ("openssl", "ca", "-gencrl", "-config", openssl_config, "-cert", core.config['certs.test-ca'], "-keyfile",
                core.config['certs.test-ca-key'], "-crldays", days, "-out", core.config['certs.test-crl'])
@@ -85,19 +83,12 @@ def create_crl():
 def cleanup_files():
     """Cleanup openssl files and config we laid down"""
     # Cleanup files from previous runs
-    # files.remove("*.pem")
-    # files.remove("*.r0")
-    files.remove("index.txt*")
-    files.remove("crlnumber")
-    # files.remove("certs", force=True)
-    files.remove(ca_key)
-    files.remove(ca_file)
-
-    # Cleanup files
+    files.remove("index.txt")
+    files.remove("crlnumber*")
+    files.remove("serial*")
     files.remove("%s.pem" % sn)
     files.remove(host_request)
-    files.remove("serial*")
-
+    
     files.restore(openssl_config, "CA")
     files.restore(cert_ext_config, "CA")
 

@@ -31,7 +31,8 @@ def parse_command_line():
                 "skiptests" : False,
                 "tarballs" : False,
                 "username" : 'vdttest',
-                "verbose" : False
+                "verbose" : False,
+                "hostcert" : False
                 }
 
     # First pass through args to get config file

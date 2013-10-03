@@ -85,6 +85,10 @@ class TestCleanup(osgunittest.OSGTestCase):
             files.remove(core.config['certs.test-ca'])
             files.remove(core.config['certs.test-ca-key'])
             files.remove(core.config['certs.test-crl'])
+
+        if core.state['certs.hostcert_created']:
+            files.remove(core.config['certs.hostcert'])
+            files.remove(core.config['certs.hostkey'])
             
         certs.cleanup_files()
 
