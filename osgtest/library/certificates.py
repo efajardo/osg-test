@@ -7,6 +7,7 @@ import osgtest.library.core as core
 import osgtest.library.files as files
 
 openssl_config = '/etc/pki/tls/openssl.cnf'
+openssl_dir = '/etc/pki/CA/'
 cert_ext_config = '/usr/share/osg-test/openssl-cert-extensions.conf' 
 host_request = "host_req"
 dn = '/DC=org/DC=Open Science Grid/O=OSG Test/CN=OSG Test CA'
@@ -15,7 +16,6 @@ sn = "A1B2C3D4E5F6"
 
 def configure_openssl():
     """Lays down files and configuration for creating CAs, certs and CRLs"""
-    working_dir = os.getcwd()
     # Instead of patching openssl's config file
     files.replace(openssl_config, "# crl_extensions	= crl_ext", "crl_extensions	= crl_ext", owner="CA")
     files.replace(openssl_config, "basicConstraints = CA:true", "basicConstraints = critical, CA:true", backup=False)
@@ -25,7 +25,7 @@ def configure_openssl():
                   backup=False)
     files.replace(openssl_config,
                   "dir		= ../../CA		# Where everything is kept",
-                  "dir		= %s		# Where everything is kept" % working_dir,
+                  "dir		= %s		# Where everything is kept" % openssl_dir,
                   backup=False)
 
     # Patches openssl-cert-extensions.conf
@@ -35,9 +35,9 @@ def configure_openssl():
                   owner="CA")
     
     # Put down necessary files
-    files.write("index.txt", "", backup=False)
-    files.write("serial", sn, backup=False)
-    files.write("crlnumber", "01", backup=False)
+    files.write(openssl_dir + "index.txt", "", backup=False)
+    files.write(openssl_dir + "serial", sn, backup=False)
+    files.write(openssl_dir + "crlnumber", "01", backup=False)
 
 def create_ca(path):
     """Create a CA similar to DigiCert's """
@@ -83,10 +83,10 @@ def create_crl():
 def cleanup_files():
     """Cleanup openssl files and config we laid down"""
     # Cleanup files from previous runs
-    files.remove("index.txt")
-    files.remove("crlnumber*")
-    files.remove("serial*")
-    files.remove("%s.pem" % sn)
+    files.remove(openssl_dir + "index.txt*")
+    files.remove(openssl_dir + "crlnumber*")
+    files.remove(openssl_dir + "serial*")
+    files.remove(openssl_dir + "%s.pem" % sn)
     files.remove(host_request)
     
     files.restore(openssl_config, "CA")

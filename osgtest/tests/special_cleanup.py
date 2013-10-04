@@ -78,13 +78,16 @@ class TestCleanup(osgunittest.OSGTestCase):
             files.restore(core.config['system.mapfile'], 'user')
 
 
-    def test_03_restore_certs(self):
+    def test_03_cleanup_test_certs(self):
         if core.state['certs.dir_created']:
             files.remove('/etc/grid-security/certificates', force=True)
         else:
-            files.remove(core.config['certs.test-ca'])
-            files.remove(core.config['certs.test-ca-key'])
-            files.remove(core.config['certs.test-crl'])
+            files.remove('/etc/grid-security/certificates/' + core.config['certs.test-ca-hash'] + '*')
+            try:
+                files.remove('/etc/grid-security/certificates/' + core.config['certs.test-ca-hash-old'] + '.*')
+            except KeyError:
+                pass
+            files.remove('/etc/grid-security/certificates/OSG-Test-CA.*')
 
         if core.state['certs.hostcert_created']:
             files.remove(core.config['certs.hostcert'])
