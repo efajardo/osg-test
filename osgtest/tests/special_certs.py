@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import unittest
 import osgtest.library.core as core
@@ -26,14 +27,9 @@ class TestUser(unittest.TestCase):
         core.config['certs.test-ca-hash'] = core.check_system(command, "Couldn't get old hash of test cert")[0].strip()
         hashes = [core.config['certs.test-ca-hash']]
 
-        # openssl-1.x has a -subject_hash_old flag that's equivalent to the -subject_hash of openssl-0.x
-        try:
-            core.get_package_envra("openssl")[2]
-        except OSError:
-            # el5 has both i386/x86_64 versions, causing this to ALWAYS break
-            # should probably fix it instead of this hack
-            pass
-        else:
+        # openssl-1.x has a -subject_hash_old flag that doesn't exist in openssl-0.x
+        openssl_version = core.get_package_envra("openssl")[2]
+        if re.match('1.+', openssl_version):
             command = ('openssl', 'x509', '-in', core.config['certs.test-ca'], '-noout', '-subject_hash_old')
             core.config['certs.test-ca-hash-old'] = core.check_system(command, "Couldn't get old hash of test cert")[0].strip()
             hashes.append(core.config['certs.test-ca-hash-old'])
