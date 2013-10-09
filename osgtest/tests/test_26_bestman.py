@@ -3,8 +3,6 @@ import osgtest.library.core as core
 import osgtest.library.files as files
 import osgtest.library.osgunittest as osgunittest
 import osgtest.library.certificates as certs
-import pwd
-import shutil
 import unittest
 
 class TestStartBestman(osgunittest.OSGTestCase):

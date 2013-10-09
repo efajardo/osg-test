@@ -1,6 +1,5 @@
 import os
 import pwd
-import shutil
 import osgtest.library.core as core
 import osgtest.library.files as files
 import osgtest.library.osgunittest as osgunittest

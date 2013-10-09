@@ -8,7 +8,7 @@ import osgtest.library.files as files
 import osgtest.library.tomcat as tomcat
 import osgtest.library.osgunittest as osgunittest
 import osgtest.library.service as service
-import osgtest.library.service as certs
+import osgtest.library.certificates as certs
 
 class TestStartGratia(osgunittest.OSGTestCase):
 
