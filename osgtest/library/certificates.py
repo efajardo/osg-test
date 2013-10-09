@@ -2,6 +2,8 @@
 
 import os
 import re
+import pwd
+import shutil
 
 import osgtest.library.core as core
 import osgtest.library.files as files
@@ -10,8 +12,8 @@ openssl_config = '/etc/pki/tls/openssl.cnf'
 openssl_dir = '/etc/pki/CA/'
 cert_ext_config = '/usr/share/osg-test/openssl-cert-extensions.conf' 
 host_request = "host_req"
-dn = '/DC=org/DC=Open Science Grid/O=OSG Test/CN=OSG Test CA'
-days = '1'
+ca_subject = '/DC=org/DC=Open Science Grid/O=OSG Test/CN=OSG Test CA'
+days = '10'
 sn = "A1B2C3D4E5F6"
 
 def configure_openssl():
@@ -48,16 +50,17 @@ def create_ca(path):
     core.check_system(command, 'generate CA private key')
 
     command = ("openssl", "req", "-new", "-x509", "-out", core.config['certs.test-ca'], "-key", 
-               core.config['certs.test-ca-key'], "-subj", dn, "-config", openssl_config, "-days", days)
+               core.config['certs.test-ca-key'], "-subj", ca_subject, "-config", openssl_config, "-days", days)
     core.check_system(command, 'generate CA')
 
 def create_host_cert(path):
     """Create a cert similar to DigiCert's"""
     host_pk_der = "hostkey.der"
+    host_cert_subject = '/DC=org/DC=Open Science Grid/O=OSG Test/OU=Services/CN=' + core.get_hostname()
     core.config['certs.hostkey'] = path + "/hostkey.pem"
     core.config['certs.hostcert'] = path + "/hostcert.pem"
 
-    command = ("openssl", "req", "-new", "-nodes", "-out", host_request, "-keyout", host_pk_der,"-subj", dn)
+    command = ("openssl", "req", "-new", "-nodes", "-out", host_request, "-keyout", host_pk_der,"-subj", host_cert_subject)
     core.check_system(command, 'generate host cert request')
     # Have to run the private key through RSA to get proper format (-keyform doesn't work in openssl > 0.9.8)
     command = ("openssl", "rsa", "-in", host_pk_der, "-outform", "PEM", "-out", core.config['certs.hostkey']) 
@@ -106,7 +109,7 @@ def certificate_info(path):
         raise OSError(status, stdout)
     return (matches.group(1), matches.group(2))
 
-def install_cert(self, target_key, source_key, owner_name, permissions):
+def install_cert(target_key, source_key, owner_name, permissions):
     """
     Carefully install a certificate with the given key from the given
     source path, then set ownership and permissions as given.  Record

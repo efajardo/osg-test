@@ -5,8 +5,9 @@ import unittest
 import osgtest.library.core as core
 import osgtest.library.files as files
 import osgtest.library.certificates as certs
+import osgtest.library.osgunittest as osgunittest
 
-class TestUser(unittest.TestCase):
+class TestCert(osgunittest.OSGTestCase):
 
     def test_01_install_ca_and_crl(self):
         certs_dir= '/etc/grid-security/certificates'
@@ -54,7 +55,7 @@ class TestUser(unittest.TestCase):
                  ('.r0', '.r0')]
         for subject_hash in hashes:
             for source, link in links:
-                source = '/etc/grid-security/certificates/' + basename + source
+                source = basename + source
                 link = '/etc/grid-security/certificates/' + subject_hash + link
                 os.symlink(source, link)
         
