@@ -256,11 +256,6 @@ class TestRSV(osgunittest.OSGTestCase):
         self.run_metric('org.osg.local.hostcert-expiry')
         return
 
-    def test_032_java_version_metric(self):
-        """Print Java version info, mostly useful for debugging test runs."""
-        core.skip_ok_unless_installed('rsv')
-        self.run_metric('org.osg.general.java-version')
-        return
 
     def test_050_gram_authentication_metric(self):
         core.skip_ok_unless_installed('rsv', 'globus-gatekeeper')
@@ -268,7 +263,6 @@ class TestRSV(osgunittest.OSGTestCase):
         self.run_metric('org.osg.globus.gram-authentication')
         return
 
-        
     def test_051_osg_version_metric(self):
         core.skip_ok_unless_installed('rsv', 'globus-gatekeeper')
 
@@ -281,9 +275,14 @@ class TestRSV(osgunittest.OSGTestCase):
         self.run_metric('org.osg.general.vo-supported')
         return
 
+    # Print Java version info, mostly useful for debugging test runs.
+    def test_053_java_version_metric(self):
+        core.skip_ok_unless_installed('rsv', 'globus-gatekeeper')
+        self.run_metric('org.osg.general.java-version')
+        return
 
     def test_070_switch_to_user_proxy(self):
-        core.skip_ok_unless_installed('rsv')
+        core.skip_ok_unless_installed('rsv', 'globus-gatekeeper')
 
         # This needs to come after some test using the service certificate
         # because it uses the service proxy as the user proxy.
@@ -298,13 +297,12 @@ class TestRSV(osgunittest.OSGTestCase):
         return
 
     def test_072_switch_to_service_cert(self):
-        core.skip_ok_unless_installed('rsv')
+        core.skip_ok_unless_installed('rsv', 'globus-gatekeeper')
 
         # We put this in its own test so that even if there is a failure we
         # will switch back to the service proxy.
         self.use_service_cert()
         return
-
 
     def test_073_switch_to_globus_job_run(self):
         core.skip_ok_unless_installed('rsv')
@@ -323,8 +321,6 @@ class TestRSV(osgunittest.OSGTestCase):
 
         self.use_condor_g()
         return
-
-
 
 
     def test_100_html_consumer(self):

@@ -12,13 +12,24 @@ import osgtest.library.certificates as certs
 
 class TestCleanup(osgunittest.OSGTestCase):
 
+    # Never declare a skipped test in this module.  The intent of an "ok skip"
+    # is to note a test that could have run, had other packages been installed.
+    # But in this module, functions are skipped due to other runtime conditions,
+    # so the correct behavior is to log a message and return.
+
     def test_01_remove_packages(self):
-        self.skip_ok_if(('install.preinstalled' not in core.state) or
-            (len(core.state['install.preinstalled']) == 0), 'no original list')
-        self.skip_ok_unless('install.installed' in core.state, 'no packages installed')
+        if ('install.preinstalled' not in core.state) or (len(core.state['install.preinstalled']) == 0):
+            core.log_message('No original list')
+            return
+        if 'install.installed' not in core.state:
+            core.log_message('No packages installed')
+            return
+
         current_rpms = core.installed_rpms()
         new_rpms = current_rpms - core.state['install.preinstalled']
-        self.skip_ok_if(len(new_rpms) == 0, 'no new RPMs')
+        if len(new_rpms) == 0:
+            core.log_message('No new RPMs')
+            return
 
         # For the "rpm -e" command, RPMs should be listed in the same order as
         # installed.  Why?  The erase command processes files in reverse order
@@ -96,8 +107,9 @@ class TestCleanup(osgunittest.OSGTestCase):
         certs.cleanup_files()
 
     def test_04_remove_test_user(self):
-        self.skip_ok_unless(core.state['general.user_added'], 'did not add user')
-
+        if not core.state['general.user_added']:
+            core.log_message('Did not add user')
+            return
 
         username = core.options.username
         password_entry = pwd.getpwnam(username)
