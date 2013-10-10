@@ -15,7 +15,7 @@ class TestCert(osgunittest.OSGTestCase):
         certs.configure_openssl()
 
         if not os.path.exists(certs_dir):
-            os.mkdir(certs_dir, 0755)
+            os.makedirs(certs_dir, 0755)
             self.assert_(os.path.exists(certs_dir), "could not create /etc/grid-security/certificates")
             core.state['certs.dir_created'] = True
 
