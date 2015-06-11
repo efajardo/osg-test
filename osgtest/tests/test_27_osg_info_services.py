@@ -8,7 +8,6 @@ import osgtest.library.core as core
 import osgtest.library.files as files
 import osgtest.library.tomcat as tomcat
 import osgtest.library.osgunittest as osgunittest
-import osgtest.library.certificates as certs
 
 class TestStartOSGInfoServices(osgunittest.OSGTestCase):
 
@@ -33,8 +32,8 @@ class TestStartOSGInfoServices(osgunittest.OSGTestCase):
         self.skip_ok_if(core.check_file_and_perms(httpcert, 'tomcat', 0644) and
                         core.check_file_and_perms(httpkey, 'tomcat', 0400),
                         'HTTP cert exists and has proper permissions')
-        certs.install_cert('certs.httpcert', 'certs.hostcert', 'tomcat', 0644)
-        certs.install_cert('certs.httpkey', 'certs.hostkey', 'tomcat', 0400)
+        core.install_cert('certs.httpcert', 'certs.hostcert', 'tomcat', 0644)
+        core.install_cert('certs.httpkey', 'certs.hostkey', 'tomcat', 0400)
 
     def test_03_create_app_dir_structure(self):
         core.skip_ok_unless_installed('osg-info-services')

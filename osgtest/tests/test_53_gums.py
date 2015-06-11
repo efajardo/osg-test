@@ -5,7 +5,6 @@ import unittest
 import osgtest.library.core as core
 import osgtest.library.files as files
 import osgtest.library.osgunittest as osgunittest
-import osgtest.library.certificates as certs
 
 class TestGUMS(osgunittest.OSGTestCase):
 
@@ -15,7 +14,7 @@ class TestGUMS(osgunittest.OSGTestCase):
     def get_user_dn(self, username):
         pwd_entry = pwd.getpwnam(username)
         cert_path = os.path.join(pwd_entry.pw_dir, '.globus', 'usercert.pem')
-        user_dn, _ = certs.certificate_info(cert_path)
+        user_dn, _ = core.certificate_info(cert_path)
         return user_dn
 
     def test_01_set_x509_env(self):
@@ -40,7 +39,9 @@ class TestGUMS(osgunittest.OSGTestCase):
         core.skip_ok_unless_installed(*self.required_rpms)
         core.state['gums.added_user'] = False
 
-        user_dn = self.get_user_dn(core.options.username)
+        pwd_entry = pwd.getpwnam(core.options.username)
+        cert_path = os.path.join(pwd_entry.pw_dir, '.globus', 'usercert.pem')
+        user_dn, _ = core.certificate_info(cert_path)
         # If we have a VO set up, use it
         if core.state['voms.added-user']:
             command = ('gums-service', 'manualGroupAdd',
@@ -49,6 +50,8 @@ class TestGUMS(osgunittest.OSGTestCase):
         else:
             command = ('gums-service', 'manualGroupAdd', 'gums-test', user_dn)
 
+        
+        command = ('gums-service', 'manualGroupAdd', 'gums-test', user_dn)
         stdout = core.check_system(command, 'Add VDT DN to manual group')[0]
         core.state['gums.added_user'] = True
 
@@ -56,7 +59,9 @@ class TestGUMS(osgunittest.OSGTestCase):
         core.skip_ok_unless_installed(*self.required_rpms)
         self.skip_bad_unless(core.state['gums.added_user'] == True, 'User not added to manual user group')
       
-        user_dn = self.get_user_dn(core.options.username)
+        pwd_entry = pwd.getpwnam(core.options.username)
+        cert_path = os.path.join(pwd_entry.pw_dir, '.globus', 'usercert.pem')
+        user_dn, _ = core.certificate_info(cert_path)
         # Use gums-host since it defaults to the host cert
         if core.state['voms.added-user']:
             command = ('gums-host', 'mapUser',

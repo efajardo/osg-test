@@ -2,7 +2,6 @@ import os
 import re
 import osgtest.library.core as core
 import osgtest.library.files as files
-import osgtest.library.certificates as certs
 import pwd
 import shutil
 import unittest
@@ -43,7 +42,8 @@ class TestUser(unittest.TestCase):
             os.chmod(globus_dir, 0755)
 
         # Set up certificate
-        certs.create_user_cert(globus_dir, core.options.username)
+        shutil.copy2('/usr/share/osg-test/usercert.pem', globus_dir)
+        shutil.copy2('/usr/share/osg-test/userkey.pem', globus_dir)
         user_cert = os.path.join(globus_dir, 'usercert.pem')
         user_key = os.path.join(globus_dir, 'userkey.pem')
         os.chmod(user_cert, 0644)
@@ -51,7 +51,10 @@ class TestUser(unittest.TestCase):
         os.chown(user_cert, user.pw_uid, user.pw_gid)
         os.chown(user_key, user.pw_uid, user.pw_gid)
 
-        core.config['user.cert_subject'], _ = certs.certificate_info(user_cert)
+        command = ('openssl', 'x509', '-in', user_cert, '-noout', '-subject')
+        stdout , _, _ = core.check_system(command, 'could not read user cert')
+        stdout = re.sub('subject= ', '', stdout)
+        core.config['user.cert_subject'] = re.sub('\n', '', stdout)
         
     def test_02_user(self):
         if core.options.skiptests or not core.options.adduser:
@@ -76,7 +79,7 @@ class TestUser(unittest.TestCase):
             core.skip('no user home dir')
             return
         cert_path = os.path.join(pwd_entry.pw_dir, '.globus', 'usercert.pem')
-        user_dn, user_cert_issuer = certs.certificate_info(cert_path)
+        user_dn, user_cert_issuer = core.certificate_info(cert_path)
         files.append(core.config['system.mapfile'], '"%s" %s\n' % (user_dn, pwd_entry.pw_name), owner='user')
         core.state['system.wrote_mapfile'] = True
         os.chmod(core.config['system.mapfile'], 0644)

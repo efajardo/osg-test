@@ -10,7 +10,6 @@ import osgtest.library.core as core
 import osgtest.library.yum as yum
 import osgtest.library.files as files
 import osgtest.library.osgunittest as osgunittest
-import osgtest.library.certificates as certs
 
 class TestCleanup(osgunittest.OSGTestCase):
 
@@ -157,25 +156,7 @@ class TestCleanup(osgunittest.OSGTestCase):
         if core.state['system.wrote_mapfile']:
             files.restore(core.config['system.mapfile'], 'user')
 
-
-    def test_06_cleanup_test_certs(self):
-        if core.state['certs.dir_created']:
-            files.remove('/etc/grid-security/certificates', force=True)
-        else:
-            files.remove('/etc/grid-security/certificates/' + core.config['certs.test-ca-hash'] + '*')
-            try:
-                files.remove('/etc/grid-security/certificates/' + core.config['certs.test-ca-hash-old'] + '.*')
-            except KeyError:
-                pass
-            files.remove('/etc/grid-security/certificates/OSG-Test-CA.*')
-
-        if core.state['certs.hostcert_created']:
-            files.remove(core.config['certs.hostcert'])
-            files.remove(core.config['certs.hostkey'])
-            
-        certs.cleanup_files()
-
-    def test_07_remove_test_user(self):
+    def test_06_remove_test_user(self):
         if not core.state['general.user_added']:
             core.log_message('Did not add user')
             return
@@ -205,7 +186,7 @@ class TestCleanup(osgunittest.OSGTestCase):
         files.remove(os.path.join('/var/spool/mail', username))
         shutil.rmtree(password_entry.pw_dir)
 
-    def test_08_enable_osg_release(self):
+    def test_07_enable_osg_release(self):
         # Re-enable osg-release on EL7 (to mirror the disabling in special_cleanup) 
         # This can be removed when we release something on EL7
         self.skip_ok_unless(core.el_release() == 7, 'Non-EL7 release')
@@ -213,7 +194,7 @@ class TestCleanup(osgunittest.OSGTestCase):
 
     # The backups test should always be last, in case any prior tests restore
     # files from backup.
-    def test_09_backups(self):
+    def test_08_backups(self):
         record_is_clear = True
         if len(files._backups) > 0:
             details = ''

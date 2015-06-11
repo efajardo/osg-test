@@ -1,9 +1,9 @@
 import os
 import pwd
+import shutil
 import osgtest.library.core as core
 import osgtest.library.files as files
 import osgtest.library.osgunittest as osgunittest
-import osgtest.library.certificates as certs
 import unittest
 import re
 
@@ -34,10 +34,8 @@ class TestStartXrootd(osgunittest.OSGTestCase):
         user = pwd.getpwnam("xrootd")
         if core.config['xrootd.gsi'] == "ON":
             core.skip_ok_unless_installed('globus-proxy-utils')
-            certs.install_cert('certs.xrootdcert', 'certs.hostcert', 
-                'xrootd', 0644)
-            certs.install_cert('certs.xrootdkey', 'certs.hostkey', 
-                'xrootd', 0400)
+            core.install_cert('certs.xrootdcert', 'certs.hostcert', 'xrootd', 0644)
+            core.install_cert('certs.xrootdkey', 'certs.hostkey', 'xrootd', 0400)
 
             cfgfile='/etc/xrootd/xrootd-clustered.cfg'
             cfgtext='cms.space min 2g 5g\n'
@@ -50,7 +48,7 @@ class TestStartXrootd(osgunittest.OSGTestCase):
             files.write(authfile,'u * /tmp a\nu = /tmp/@=/ a\nu xrootd /tmp a\n', owner="xrootd",
                         chown=(user.pw_uid, user.pw_gid))
             
-            user_dn = certs.certificate_info(core.config['certs.usercert'])[1]
+            user_dn = core.certificate_info(core.config['certs.usercert'])[1]
             files.write("/etc/grid-security/xrd/xrdmapfile","\"%s\" vdttest" % user_dn, owner="xrootd",
                         chown=(user.pw_uid, user.pw_gid))
             core.state['xrootd.backups-exist'] = True

@@ -15,7 +15,7 @@ class TestStopCondorCE(osgunittest.OSGTestCase):
                      'HTCondor CE run lock file exists')
 
     def test_02_restore_config(self):
-        core.skip_ok_unless_installed('condor', 'htcondor-ce', 'htcondor-ce-client', 'htcondor-ce-condor')
+        core.skip_ok_unless_installed('condor', 'htcondor-ce', 'htcondor-ce-client', 'htcondor-ce-condor')        
 
         if core.rpm_is_installed('gums-service'):
             files.restore(core.config['condor-ce.lcmapsdb'], 'condor-ce.gums')
@@ -24,5 +24,3 @@ class TestStopCondorCE(osgunittest.OSGTestCase):
         files.restore(core.config['condor-ce.condor-cfg'], 'condor-ce')
         files.restore(core.config['condor-ce.condor-ce-cfg'], 'condor-ce')
         files.restore(core.config['condor-ce.lcmapsdb'], 'condor-ce')
-        if core.options.hostcert:
-            files.restore(core.config['condor-ce.condorce_mapfile'], 'condor-ce')

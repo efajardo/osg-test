@@ -1,5 +1,3 @@
-import os
-import pwd
 import osgtest.library.core as core
 import osgtest.library.osgunittest as osgunittest
 
@@ -14,15 +12,13 @@ class TestGridProxyInit(osgunittest.OSGTestCase):
         command = ('grid-proxy-destroy', '-debug')
         core.system(command, user=True)
 
-    def test_02_check_usercert_pass(self):
+    def test_02_grid_proxy_init_no_password(self):
         core.skip_ok_unless_installed('globus-proxy-utils')
-        user = pwd.getpwnam(core.options.username)
-        userkey = os.path.join(user.pw_dir, '.globus', 'userkey.pem')
-        command = ('openssl', 'rsa', '-in', userkey, '-passin', 'pass:', '-text')
+        command = ('grid-proxy-init', '-debug')
         exit_status, _, _ = core.system(command, user=True)
         if exit_status == 0:
             core.system(('grid-proxy-destroy',), user=True)
-            self.fail('user cert has no password')
+            self.fail('grid-proxy-init succeeded with no password')
 
     def test_03_grid_proxy_init(self):
         core.state['proxy.created'] = False

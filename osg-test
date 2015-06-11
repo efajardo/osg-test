@@ -26,7 +26,6 @@ def parse_command_line():
                 "dumpfile": None,
                 "dumpout": False,
                 "extrarepos": [],
-                "hostcert": False,
                 "packages": [],
                 "password": 'vdttest',
                 "printtest": True,
@@ -157,10 +156,7 @@ def read_args():
 
     p.add_option('-v', '--verbose', action='store_true', dest='verbose',
                       help='Increase quantity of output')
-
-    p.add_option('--hostcert', action='store_true', dest='hostcert',
-                      help='Create host cert')
-
+    
     return p
 
 def get_password():
@@ -185,7 +181,6 @@ def discover_tests():
                       if d.startswith('test_') and d.endswith('.py')]
     test_files.sort()
     args = []
-    args.append('osgtest.tests.special_certs')
     args.append('osgtest.tests.special_user') # always safe
     if not core.options.tarballs:
         if len(core.options.packages) > 0:

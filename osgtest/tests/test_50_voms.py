@@ -1,5 +1,4 @@
 import os
-import osgtest.library.certificates as certs
 import pwd
 import re
 import socket
@@ -25,7 +24,7 @@ class TestVOMS(osgunittest.OSGTestCase):
 
         pwd_entry = pwd.getpwnam(core.options.username)
         cert_path = os.path.join(pwd_entry.pw_dir, '.globus', 'usercert.pem')
-        user_cert_dn, user_cert_issuer = certs.certificate_info(cert_path)
+        user_cert_dn, user_cert_issuer = core.certificate_info(cert_path)
         hostname = socket.getfqdn()
 
         command = ('voms-admin', '--vo', core.config['voms.vo'], '--host', hostname, '--nousercert', 'create-user',

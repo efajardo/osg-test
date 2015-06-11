@@ -2,7 +2,8 @@ import os
 import osgtest.library.core as core
 import osgtest.library.files as files
 import osgtest.library.osgunittest as osgunittest
-import osgtest.library.certificates as certs
+import pwd
+import shutil
 import unittest
 
 class TestStartBestman(osgunittest.OSGTestCase):
@@ -20,8 +21,8 @@ class TestStartBestman(osgunittest.OSGTestCase):
         if (os.path.exists(core.config['certs.bestmancert']) and
             os.path.exists(core.config['certs.bestmankey'])):
             return
-        certs.install_cert('certs.bestmancert', 'certs.hostcert', 'bestman', 0644)
-        certs.install_cert('certs.bestmankey', 'certs.hostkey', 'bestman', 0400)
+        core.install_cert('certs.bestmancert', 'certs.hostcert', 'bestman', 0644)
+        core.install_cert('certs.bestmankey', 'certs.hostkey', 'bestman', 0400)
 
     def test_03_modify_sudoers(self):
         core.skip_ok_unless_installed('bestman2-server', 'bestman2-client', 'voms-clients')

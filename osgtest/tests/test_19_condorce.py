@@ -28,7 +28,6 @@ class TestStartCondorCE(osgunittest.OSGTestCase):
 
     def test_03_configure_authentication(self):
         core.skip_ok_unless_installed('condor', 'htcondor-ce', 'htcondor-ce-client')
-
         # Configure condor-ce to use the gridmap file and set up PBS and Condor routes
         core.config['condor-ce.condor-ce-cfg'] = '/etc/condor-ce/config.d/99-osgtest.condor-ce.conf'
         condor_contents = """GRIDMAP = /etc/grid-security/grid-mapfile
@@ -61,15 +60,6 @@ authorize_only:
 gridmapfile -> good | bad
 """
         files.append(core.config['condor-ce.lcmapsdb'], lcmaps_contents, owner='condor-ce')
-
-        # Add host DN to condor_mapfile
-        if core.options.hostcert:
-            core.config['condor-ce.condorce_mapfile'] = '/etc/condor-ce/condor_mapfile'
-            condor_mapfile_contents = files.read('/usr/share/osg-test/test_condorce_mapfile')
-            files.write(core.config['condor-ce.condorce_mapfile'],
-                        condor_mapfile_contents,
-                        owner='condor-ce',
-                        chmod=0644)
 
     def test_05_start_condorce(self):
         core.config['condor-ce.lockfile'] = '/var/lock/subsys/condor-ce'

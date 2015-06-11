@@ -7,7 +7,6 @@ import osgtest.library.files as files
 import osgtest.library.tomcat as tomcat
 import osgtest.library.osgunittest as osgunittest
 import osgtest.library.service as service
-import osgtest.library.certificates as certs
 
 class TestStartGratia(osgunittest.OSGTestCase):
 
@@ -156,8 +155,8 @@ class TestStartGratia(osgunittest.OSGTestCase):
         self.skip_ok_if(core.check_file_and_perms(httpcert, 'tomcat', 0644) and
                         core.check_file_and_perms(httpkey, 'tomcat', 0400),
                         'HTTP cert exists and has proper permissions')
-        certs.install_cert('certs.httpcert', 'certs.hostcert', 'tomcat', 0644)
-        certs.install_cert('certs.httpkey', 'certs.hostkey', 'tomcat', 0400)
+        core.install_cert('certs.httpcert', 'certs.hostcert', 'tomcat', 0644)
+        core.install_cert('certs.httpkey', 'certs.hostkey', 'tomcat', 0400)
         
     #This test stops the Tomcat service
     def test_09_stop_tomcat(self):

@@ -71,7 +71,6 @@ def start_log():
     _log.write('  - Skip tests: %s\n' % str(options.skiptests))
     _log.write('  - Test user: %s\n' % options.username)
     _log.write('  - Timeout: %s\n' % str(options.timeout))
-    _log.write('  - Create hostcert: %s\n' % str(options.hostcert))
     _log.write('  - Backup MySQL: %s\n' % str(options.backupmysql))
     _log.flush()
 
@@ -329,7 +328,6 @@ def skip_bad_if_more_than_one_installed(*packages):
     if len(installed) > 1:
         raise osgunittest.BadSkipException('More than one installed of the ce: %s' % ' '.join(installed))
 
-
 def skip_ok_unless_one_installed(*packages):
     """                                                                                                                                        
      Raise osgunittest.SkipOkException if at least one of the packages are installed                                                           
@@ -343,6 +341,21 @@ def skip_ok_unless_one_installed(*packages):
             installed.append(package)
     if len(installed)==0:
         raise osgunittest.OkSkipException('None of these were intalled, skipping %s ' % ' '.join(packages))
+
+def certificate_info(path):
+    """Extracts and returns the subject and issuer from an X.509 certificate."""
+    command = ('openssl', 'x509', '-noout', '-subject', '-issuer', '-in', path)
+    status, stdout, stderr = system(command)
+    if (status != 0) or (stdout is None) or (stderr is not None):
+        raise OSError(status, stderr)
+    if len(stdout.strip()) == 0:
+        raise OSError(status, stdout)
+    subject_issuer_re = r'subject\s*=\s*([^\n]+)\nissuer\s*=\s*([^\n]+)\n'
+    matches = re.match(subject_issuer_re, stdout)
+    if matches is None:
+        raise OSError(status, stdout)
+    return (matches.group(1), matches.group(2))
+
 
 def get_package_envra(package_name):
     """Query and return the ENVRA (Epoch, Name, Version, Release, Arch) of an
@@ -543,3 +556,62 @@ def parse_env_output(output):
             pass
         
     return env
+
+def check_file_and_perms(file_path, owner_name, permissions):
+    """Return True if the file at 'file_path' exists, is owned by
+    'owner_name', is a file, and has the given permissions; False otherwise
+
+    """
+    owner_uid = pwd.getpwnam(owner_name)
+    try:
+        file_stat = os.stat(file_path)
+        return (file_stat.st_uid == owner_uid and
+                file_stat.st_mode & 07777 == permissions and
+                stat.S_ISREG(file_stat.st_mode))
+    except OSError: # file does not exist
+        return False
+
+def install_cert(target_key, source_key, owner_name, permissions):
+    """ Carefully install a certificate with the given key from the given
+    source path, then set ownership and permissions as given.  Record
+    each directory and file created by this process into the config
+    dictionary; do so immediately after creation, so that the
+    remove_cert() function knows exactly what to remove/restore."""
+
+    target_path = config[target_key]
+    target_dir = os.path.dirname(target_path)
+    source_path = config[source_key]
+    user = pwd.getpwnam(owner_name)
+
+    # Using os.path.lexists because os.path.exists return False for broken symlinks
+    if os.path.lexists(target_path):
+        backup_path = target_path + '.osgtest.backup'
+        shutil.move(target_path, backup_path)
+        state[target_key + '-backup'] = backup_path
+
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+        state[target_key + '-dir'] = target_dir
+        os.chown(target_dir, user.pw_uid, user.pw_gid)
+        os.chmod(target_dir, 0755)
+
+    shutil.copy(source_path, target_path)
+    state[target_key] = target_path
+    os.chown(target_path, user.pw_uid, user.pw_gid)
+    os.chmod(target_path, permissions)
+
+def remove_cert(target_key):
+    '''
+    Carefully removes a certificate with the given key.  Removes all
+    paths associated with the key, as created by the install_cert()
+    function.
+    '''
+    if state.has_key(target_key):
+        os.remove(state[target_key])
+    if state.has_key(target_key + '-backup'):
+        shutil.move(state[target_key + '-backup'],
+                    state[target_key])
+    if state.has_key(target_key + '-dir'):
+        target_dir = state[target_key + '-dir']
+        if len(os.listdir(target_dir)) == 0:
+            os.rmdir(target_dir)
