@@ -1,4 +1,5 @@
 import os
+import errno
 import shutil
 
 import osgtest.library.core as core
@@ -7,8 +8,15 @@ import osgtest.library.osgunittest as osgunittest
 class TestCert(osgunittest.OSGTestCase):
 
     def test_01_install_host_cert(self):
-        host_cert_dir = '/etc/grid-security'
         core.state['certs.hostcert_created'] = False
+        try:
+            host_cert_dir = '/etc/grid-security'
+            os.mkdir(host_cert_dir)
+        except OSError, e:
+            if e.errno == errno.EEXIST:
+                pass
+            else:
+                raise
 
         if core.options.hostcert:
             host_cert = os.path.join(host_cert_dir, 'hostcert.pem')
