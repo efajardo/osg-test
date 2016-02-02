@@ -50,8 +50,6 @@ class TestGUMS(osgunittest.OSGTestCase):
         else:
             command = ('gums-service', 'manualGroupAdd', 'gums-test', user_dn)
 
-        
-        command = ('gums-service', 'manualGroupAdd', 'gums-test', user_dn)
         stdout = core.check_system(command, 'Add VDT DN to manual group')[0]
         core.state['gums.added_user'] = True
 
