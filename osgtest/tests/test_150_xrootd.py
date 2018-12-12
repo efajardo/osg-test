@@ -84,7 +84,7 @@ class TestStartXrootd(osgunittest.OSGTestCase):
             core.config['xrootd_service'] = "xrootd"
         elif core.config['xrootd.multiuser'] == "ON":
             core.config['xrootd_service'] = "xrootd-privileged@clustered"
-        else
+        else:
             core.config['xrootd_service'] = "xrootd@clustered"
 
         service.check_start(core.config['xrootd_service'])
