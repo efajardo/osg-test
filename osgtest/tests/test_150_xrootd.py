@@ -82,7 +82,7 @@ class TestStartXrootd(osgunittest.OSGTestCase):
         core.skip_ok_unless_installed('xrootd', by_dependency=True)
         if core.el_release() < 7:
             core.config['xrootd_service'] = "xrootd"
-        else if core.config['xrootd.multiuser'] == "ON":
+        elif core.config['xrootd.multiuser'] == "ON":
             core.config['xrootd_service'] = "xrootd-privileged@clustered"
         else
             core.config['xrootd_service'] = "xrootd@clustered"
