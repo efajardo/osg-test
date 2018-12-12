@@ -14,14 +14,13 @@ class TestXrootd(osgunittest.OSGTestCase):
 
     __data_path = '/usr/share/osg-test/test_gridftp_data.txt'
     __fuse_path = '/mnt/xrootd_fuse_test'
-    temp_dir = "/tmp/vdttest"
 
     def test_01_xrdcp_local_to_server(self):
         core.skip_ok_unless_installed('xrootd', 'xrootd-client', by_dependency=True)
         if core.config['xrootd.gsi'] == "ON":
             core.skip_ok_unless_installed('globus-proxy-utils')
         self.skip_bad_unless(core.state['xrootd.started-server'] is True, 'Server not running')
-
+        temp_dir = "/tmp/vdttest"
         hostname = socket.getfqdn()
         if core.config['xrootd.gsi'] == "ON":
             if not os.path.exists(temp_dir):
@@ -46,6 +45,7 @@ class TestXrootd(osgunittest.OSGTestCase):
 
     def test_02_test_multiuser(self):
         core.skip_ok_unless_installed('xrootd', 'xrootd-client', 'xrootd-multiuser', by_dependency=True)
+        temp_dir = "/tmp/vdttest"
         if core.config['xrootd.multiuser'] == "ON":
             vdttestpid = pwd.getpwnam("vdttest")
             owner = stat(os.path.join(temp_dir, 'copied_file.txt')).st_uid
