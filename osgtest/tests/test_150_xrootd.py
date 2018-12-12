@@ -33,6 +33,7 @@ class TestStartXrootd(osgunittest.OSGTestCase):
         core.config['certs.xrootdkey'] = '/etc/grid-security/xrd/xrdkey.pem'
         core.config['xrootd.config'] = '/etc/xrootd/xrootd-clustered.cfg'
         core.config['xrootd.gsi'] = "ON"
+        core.config['xrootd.multiuser'] = "OFF"
         core.state['xrootd.started-server'] = False
         core.state['xrootd.backups-exist'] = False
 
@@ -81,7 +82,9 @@ class TestStartXrootd(osgunittest.OSGTestCase):
         core.skip_ok_unless_installed('xrootd', by_dependency=True)
         if core.el_release() < 7:
             core.config['xrootd_service'] = "xrootd"
-        else:
+        else if core.config['xrootd.multiuser'] == "ON":
+            core.config['xrootd_service'] = "xrootd-privileged@clustered"
+        else
             core.config['xrootd_service'] = "xrootd@clustered"
 
         service.check_start(core.config['xrootd_service'])
