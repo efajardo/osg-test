@@ -39,8 +39,8 @@ class TestXrootd(osgunittest.OSGTestCase):
         fail = core.diagnose('xrdcp copy, local to URL',
                              command, status, stdout, stderr)
         file_copied = os.path.exists(os.path.join(temp_dir, 'copied_file.txt'))
-        shutil.rmtree(temp_dir)
-
+        if core.config['xrootd.multiuser'] != "ON":
+            shutil.rmtree(temp_dir)
         self.assertEqual(status, 0, fail)
         self.assert_(file_copied, 'Copied file missing')
 
@@ -49,6 +49,7 @@ class TestXrootd(osgunittest.OSGTestCase):
         if core.config['xrootd.multiuser'] == "ON":
             vdttestpid = pwd.getpwnam("vdttest")
             owner = stat("/tmp/vdttest/copied_file.txt").st_uid
+            shutil.rmtree("/tmp/vdttest")
             self.assertEqual(owner, vdttestpid)
 
     def test_03_xrdcp_server_to_local(self):
