@@ -47,8 +47,9 @@ class TestXrootd(osgunittest.OSGTestCase):
     def test_02_test_multiuser(self):
         core.skip_ok_unless_installed('xrootd', 'xrootd-client', 'xrootd-multiuser', by_dependency=True)
         if core.config['xrootd.multiuser'] == "ON":
-            owner = stat.("/tmp/vdttest/copied_file.txt").st_uid
-            self.assertEqual(owner, vdttest)
+            vdttestpid = pwd.getpwnam("vdttest")
+            owner = stat("/tmp/vdttest/copied_file.txt").st_uid
+            self.assertEqual(owner, vdttestpid)
 
     def test_03_xrdcp_server_to_local(self):
         core.skip_ok_unless_installed('xrootd', 'xrootd-client', by_dependency=True)
