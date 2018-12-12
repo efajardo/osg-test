@@ -14,6 +14,7 @@ class TestXrootd(osgunittest.OSGTestCase):
 
     __data_path = '/usr/share/osg-test/test_gridftp_data.txt'
     __fuse_path = '/mnt/xrootd_fuse_test'
+    temp_dir = "/tmp/vdttest"
 
     def test_01_xrdcp_local_to_server(self):
         core.skip_ok_unless_installed('xrootd', 'xrootd-client', by_dependency=True)
@@ -23,7 +24,6 @@ class TestXrootd(osgunittest.OSGTestCase):
 
         hostname = socket.getfqdn()
         if core.config['xrootd.gsi'] == "ON":
-            temp_dir = "/tmp/vdttest"
             if not os.path.exists(temp_dir):
                 os.mkdir(temp_dir)
                 user = pwd.getpwnam(core.options.username)
@@ -48,8 +48,8 @@ class TestXrootd(osgunittest.OSGTestCase):
         core.skip_ok_unless_installed('xrootd', 'xrootd-client', 'xrootd-multiuser', by_dependency=True)
         if core.config['xrootd.multiuser'] == "ON":
             vdttestpid = pwd.getpwnam("vdttest")
-            owner = stat("/tmp/vdttest/copied_file.txt").st_uid
-            shutil.rmtree("/tmp/vdttest")
+            owner = stat(os.path.join(temp_dir, 'copied_file.txt')).st_uid
+            shutil.rmtree(temp_dir)
             self.assertEqual(owner, vdttestpid)
 
     def test_03_xrdcp_server_to_local(self):
